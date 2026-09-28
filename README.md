@@ -43,6 +43,8 @@ A tela inicial é a **Central**, com duas portas que usam o mesmo cadastro de es
 
 A lista abre sozinha **30 minutos antes** do encontro e fecha **1 hora depois**. Para quem só consegue ver o material mais tarde, escolha em **Aceitar assinaturas**: *48 horas*, *72 horas* ou *7 dias*.
 
+O encontro **já aconteceu** e ficou sem lista? Crie mesmo assim: a lista abre na hora, recebe assinaturas por 48 horas (ou pelo prazo escolhido) e **fecha sozinha**.
+
 <br clear="right">
 
 <div align="center">
@@ -74,7 +76,8 @@ O sistema confere tudo antes de gravar: CPF válido, assinatura de verdade, list
 - As assinaturas **aparecem na hora**, sem recarregar a página. No painel o CPF fica mascarado (`***.445.154-**`).
 - **Exportar lista em Word** gera o documento no modelo oficial: logo do projeto, Pronac, Realização *Instituto Cuidare*, escola, cidade, tabela com nome/cargo, CPF e assinatura.
 - **Baixar planilha** traz os mesmos dados para o Excel.
-- Dá para **corrigir** os dados da lista, **abrir ou encerrar** na hora e **remover** uma assinatura feita por engano.
+- A chave **Aceitando presenças** reabre uma lista encerrada **por 48 horas** (depois ela fecha sozinha) ou encerra na hora. A tela mostra até quando ela aceita assinaturas.
+- Dá para **corrigir** os dados da lista e **remover** uma assinatura feita por engano.
 
 <div align="center">
 <img src="imagens/documento.png" alt="Documento da lista no modelo da empresa" width="640">
@@ -90,7 +93,8 @@ O sistema confere tudo antes de gravar: CPF válido, assinatura de verdade, list
 
 O plano do ano, por projeto e patrocinador, separado no que falta fazer: **realizadas sem lista**, **com data**, **sem data** e **com lista**.
 
-- **Criar lista** num item abre o assistente **já preenchido** (projeto, tema, data, hora e escola) e deixa a lista ligada ao plano.
+- **Criar lista** num item abre o assistente **já preenchido** (projeto, tema, data, hora e escola) e deixa a lista ligada ao plano. Se o projeto ainda não tem Pronac, dá para **cadastrar ali mesmo**.
+- Capacitação que **já aconteceu** sem lista também vira lista: ela abre na hora e recebe assinaturas por 48 horas.
 - Quando a lista recebe assinaturas, a **participação da escola fica confirmada**.
 - Se já existe uma lista da mesma escola, o sistema **sugere ligar as duas**.
 

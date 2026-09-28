@@ -144,7 +144,13 @@ try {
 
   const { data: lista } = await admin.from('trainings').select('id, school_id').eq('code', code).single()
   await page.goto(`${SITE}/listas/${lista.id}`)
-  await print('lista-acompanhamento', { espera: 3000 })
+  // mostra a chave nova: encerra e reabre (por 48 h), para aparecer "Aberta até …"
+  const chave = page.getByRole('switch', { name: 'Aceitando presenças' })
+  await chave.click()
+  await page.getByText('Lista encerrada').first().waitFor()
+  await chave.click()
+  await page.getByText(/Aberta até/).waitFor()
+  await print('lista-acompanhamento', { espera: 2500 })
   await page.goto(`${SITE}/imprimir/${lista.id}`)
   await print('documento', { espera: 1500 })
 
