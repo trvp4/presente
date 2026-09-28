@@ -44,7 +44,7 @@ export default async function Relatorios({ searchParams }: { searchParams: Promi
   // Capacitações do Presente nos projetos deste patrocinador
   const projetoIds = [...new Set(es.estado.vinculos.filter(v => r.grade.some(g => g.vinculo === v.vinculo_id)).map(v => v.projeto_id))]
   const { data: caps } = projetoIds.length
-    ? await supabase.from('trainings').select('id, title, date, start_time, end_time, state, keep_open_hours, beneficiary_name, attendances(count)').in('project_id', projetoIds).gte('date', `${de}-01`).order('date')
+    ? await supabase.from('trainings').select('id, title, date, start_time, end_time, state, keep_open_hours, open_until, beneficiary_name, attendances(count)').in('project_id', projetoIds).gte('date', `${de}-01`).order('date')
     : { data: [] }
   // Plano de capacitações deste patrocinador (o plano já diz o patrocinador de cada capacitação)
   const { data: planoDb } = await supabase.from('plano_capacitacoes')
@@ -128,7 +128,7 @@ export default async function Relatorios({ searchParams }: { searchParams: Promi
         <section>
           <div className="sec-title"><h2>Capacitações nos projetos <span className="from">vindo do Presente</span></h2><span>listas de presença desde {r.periodo.split(' a ')[0]}</span></div>
           <div className="es-list">
-            {(caps as (Pick<Training, 'id' | 'title' | 'date' | 'start_time' | 'end_time' | 'state' | 'keep_open_hours' | 'beneficiary_name'> & { attendances: { count: number }[] })[]).map(c => (
+            {(caps as (Pick<Training, 'id' | 'title' | 'date' | 'start_time' | 'end_time' | 'state' | 'keep_open_hours' | 'open_until' | 'beneficiary_name'> & { attendances: { count: number }[] })[]).map(c => (
               <div key={c.id} className="es-row">
                 <div><div className="t">{c.title}</div><div className="s">{c.date.split('-').reverse().join('/')} · {c.beneficiary_name ?? 'instituição não informada'}</div></div>
                 <div className="hide-sm s">{c.attendances?.[0]?.count ?? 0} presença(s)</div>

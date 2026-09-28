@@ -32,7 +32,7 @@ export async function signAttendance(input: {
   const admin = createAdminClient()
   const { data: t } = await admin
     .from('trainings')
-    .select('id, date, start_time, end_time, state, keep_open_hours, expected_count')
+    .select('id, date, start_time, end_time, state, keep_open_hours, open_until, expected_count')
     .eq('code', String(input.code ?? ''))
     .maybeSingle()
   if (!t) return { ok: false, errors: { form: 'Link de presença não encontrado.' } }

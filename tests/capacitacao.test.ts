@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { validarCapacitacao } from '@/lib/capacitacao'
+import { abertaAte, prazoNaCorrecao, validarCapacitacao } from '@/lib/capacitacao'
+import { statusOf } from '@/lib/format'
 
 const valida = {
   project_id: 'p1', title: '  Mediação de leitura ', date: '2026-10-08', start_time: '14:00', end_time: '16:00',
@@ -46,5 +47,35 @@ describe('Capacitação criada ou corrigida pela Equipe', () => {
 
   it('exige o Projeto', () => {
     expect(validarCapacitacao({ ...valida, project_id: '' })).toMatchObject({ ok: false, field: 'project_id' })
+  })
+})
+
+describe('Lista criada depois do encontro', () => {
+  const agora = new Date('2026-09-28T15:00:00-03:00')
+  const lista = (date: string, keep_open_hours: number | null = null) => ({ date, start_time: '15:30', end_time: '17:30', keep_open_hours })
+
+  it('encontro que já passou: recebe assinaturas por 48 h a partir da criação, ou pelo prazo escolhido', () => {
+    expect(abertaAte(lista('2026-08-07'), agora)).toBe('2026-09-30T18:00:00.000Z')
+    expect(abertaAte(lista('2026-08-07', 168), agora)).toBe('2026-10-05T18:00:00.000Z')
+  })
+
+  it('encontro de hoje, futuro ou ainda dentro da janela: segue o horário, sem prazo extra', () => {
+    expect(abertaAte(lista('2026-10-06'), agora)).toBeNull()
+    expect(abertaAte(lista('2026-09-28'), agora)).toBeNull()
+    expect(abertaAte(lista('2026-09-27', 48), agora)).toBeNull() // lista estendida ainda aberta
+    expect(abertaAte({ date: '2026-09-28', start_time: '12:00', end_time: '14:00', keep_open_hours: null }, agora)).toBeNull() // fecha às 15:00: ainda dentro
+    expect(abertaAte({ date: '2026-09-28', start_time: '11:59', end_time: '13:59', keep_open_hours: null }, agora)).not.toBeNull() // fechou às 14:59
+  })
+
+  it('a lista aceita assinaturas até o prazo e fecha sozinha depois', () => {
+    const t = { ...lista('2026-08-07'), state: 'auto' as const, open_until: '2026-09-30T18:00:00.000Z' }
+    expect(statusOf(t, new Date('2026-09-30T14:59:00-03:00'))).toBe('live')
+    expect(statusOf(t, new Date('2026-09-30T15:01:00-03:00'))).toBe('done')
+    expect(statusOf({ ...t, state: 'closed' }, agora)).toBe('done') // encerrar à mão continua valendo
+  })
+
+  it('corrigir a data para um encontro futuro tira o prazo; para uma data passada, não mexe', () => {
+    expect(prazoNaCorrecao(lista('2026-10-06'), agora)).toEqual({ open_until: null })
+    expect(prazoNaCorrecao(lista('2026-08-07'), agora)).toEqual({})
   })
 })

@@ -28,6 +28,7 @@ export type Training = {
   city: string | null
   expected_count: number
   keep_open_hours: number | null // lista estendida (JANELAS_ESTENDIDAS); null = só o horário do encontro
+  open_until: string | null // lista criada depois do encontro: aceita assinaturas até aqui (ISO)
   code: string
   state: 'auto' | 'open' | 'closed'
   pdf_sent_at: string | null
@@ -54,9 +55,11 @@ const CLOSE_AFTER_MIN = 60
 // Lista estendida: horas a partir do início do encontro, para quem só consegue ver o material depois (à noite)
 export const JANELAS_ESTENDIDAS = [48, 72, 168] as const
 
-export function statusOf(t: Pick<Training, 'date' | 'start_time' | 'end_time' | 'state' | 'keep_open_hours'>, now = new Date()): Status {
+export function statusOf(t: Pick<Training, 'date' | 'start_time' | 'end_time' | 'state' | 'keep_open_hours' | 'open_until'>, now = new Date()): Status {
   if (t.state === 'open') return 'live'
   if (t.state === 'closed') return 'done'
+  // lista criada depois do encontro: aceita assinaturas até o prazo contado da criação (lib/capacitacao abertaAte)
+  if (t.open_until && now.getTime() <= new Date(t.open_until).getTime()) return 'live'
   const inicio = new Date(`${t.date}T${t.start_time.slice(0, 5)}:00${TZ}`).getTime()
   const start = inicio - OPEN_BEFORE_MIN * 60e3
   const end = Math.max(

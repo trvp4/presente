@@ -9,7 +9,7 @@ const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
 const capacitacao: Training = {
   id: 't1', project_id: 'p1', title: 'Mediação de leitura', date: '2026-09-24', start_time: '14:00:00', end_time: '16:00:00',
   instructor: 'Maria', beneficiary_name: 'Escola A & B', beneficiary_cnpj: '11222333000181', city: 'São Paulo – SP',
-  expected_count: 25, keep_open_hours: null, code: 'ABC234', state: 'auto', pdf_sent_at: null, created_at: '2026-09-20T12:00:00Z',
+  expected_count: 25, keep_open_hours: null, open_until: null, code: 'ABC234', state: 'auto', pdf_sent_at: null, created_at: '2026-09-20T12:00:00Z',
 }
 const projeto: Project = { id: 'p1', name: 'Biblioteca Viva', pronac: '123456', logo: png, archived: false }
 const presenca = (id: string, full_name: string): Attendance => ({

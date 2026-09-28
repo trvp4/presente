@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { janelaTexto, statusOf } from '@/lib/format'
 
 // Capacitação de 24/09/2026, das 14:00 às 16:00 (horário de Brasília)
-const capacitacao = { date: '2026-09-24', start_time: '14:00:00', end_time: '16:00:00', state: 'auto' as const, keep_open_hours: null }
+const capacitacao = { date: '2026-09-24', start_time: '14:00:00', end_time: '16:00:00', state: 'auto' as const, keep_open_hours: null, open_until: null }
 const em = (hora: string) => new Date(`2026-09-24T${hora}:00-03:00`)
 
 describe('Janela de Assinatura', () => {

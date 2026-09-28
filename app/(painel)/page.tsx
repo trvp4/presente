@@ -13,12 +13,12 @@ export const metadata = { title: 'Central' }
 export default async function Central() {
   const { supabase, name } = await getStaff()
   const [{ data }, es, { data: plano }] = await Promise.all([
-    supabase.from('trainings').select('date, start_time, end_time, state, keep_open_hours, pdf_sent_at'),
+    supabase.from('trainings').select('date, start_time, end_time, state, keep_open_hours, open_until, pdf_sent_at'),
     carregarEspacos(supabase).catch(() => null), // se o Espaços falhar, a porta do Presente continua de pé
     supabase.from('plano_capacitacoes').select('situacao, training_id, data_prevista'),
   ])
   const grupos = (plano ?? []).map(i => grupoDoItem(i as Parameters<typeof grupoDoItem>[0]))
-  const listas = (data ?? []) as Pick<Training, 'date' | 'start_time' | 'end_time' | 'state' | 'keep_open_hours' | 'pdf_sent_at'>[]
+  const listas = (data ?? []) as Pick<Training, 'date' | 'start_time' | 'end_time' | 'state' | 'keep_open_hours' | 'open_until' | 'pdf_sent_at'>[]
   const st = listas.map(t => ({ t, s: statusOf(t) }))
   const semana = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)
   const ciclo = es ? cicloPadrao(es.ciclos) : null

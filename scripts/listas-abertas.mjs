@@ -5,9 +5,9 @@ import { statusOf } from '../lib/format.ts'
 
 const { data, error } = await adminClient()
   .from('trainings')
-  .select('title, date, start_time, end_time, state, keep_open_hours, code')
+  .select('title, date, start_time, end_time, state, keep_open_hours, open_until, code')
   // listas de ontem em diante, mais qualquer uma aberta manualmente
-  .or(`date.gte.${new Date(Date.now() - 864e5).toISOString().slice(0, 10)},state.eq.open`)
+  .or(`date.gte.${new Date(Date.now() - 864e5).toISOString().slice(0, 10)},state.eq.open,open_until.gt.${new Date().toISOString()}`)
 if (error) {
   console.error(`Não consegui consultar as listas: ${error.message}`)
   process.exitCode = 1

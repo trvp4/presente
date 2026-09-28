@@ -4,7 +4,7 @@ import { statusOf, type Training } from '@/lib/format'
 import { GRUPOS, grupoDoItem, participacao, sugestaoDeLista, type ItemPlano, type ListaLigada } from '@/lib/plano'
 import { chavePatrocinador, listarPatrocinadores } from '@/lib/espacos/relatorio'
 import { DateBox, Underline } from '@/components/ui'
-import { Desligar, EditarItem, NovoItem, type Opcoes } from './Acoes'
+import { CadastrarPronac, Desligar, EditarItem, NovoItem, type Opcoes } from './Acoes'
 
 export const metadata = { title: 'Plano de capacitações' }
 
@@ -17,12 +17,12 @@ export default async function Plano({ searchParams }: { searchParams: Promise<{ 
     supabase.from('plano_capacitacoes').select('*').order('data_prevista', { nullsFirst: false }),
     supabase.from('projects').select('id, name, pronac, archived').order('name'),
     supabase.from('schools').select('id, nome, cidade').order('nome'),
-    supabase.from('trainings').select('id, title, school_id, beneficiary_name, date, start_time, end_time, state, keep_open_hours, attendances(count)').order('date', { ascending: false }),
+    supabase.from('trainings').select('id, title, school_id, beneficiary_name, date, start_time, end_time, state, keep_open_hours, open_until, attendances(count)').order('date', { ascending: false }),
   ])
   const todos = (itensDb ?? []) as ItemPlano[]
   const projeto = new Map((projetos ?? []).map(p => [p.id, p]))
   const escola = new Map((escolas ?? []).map(e => [e.id, e]))
-  type Lista = Pick<Training, 'id' | 'title' | 'beneficiary_name' | 'date' | 'start_time' | 'end_time' | 'state' | 'keep_open_hours'> & { school_id: string | null; attendances: { count: number }[] }
+  type Lista = Pick<Training, 'id' | 'title' | 'beneficiary_name' | 'date' | 'start_time' | 'end_time' | 'state' | 'keep_open_hours' | 'open_until'> & { school_id: string | null; attendances: { count: number }[] }
   const listas = new Map(((listasDb ?? []) as unknown as (Lista & { school_id: string | null })[]).map(t => [t.id, {
     id: t.id, school_id: t.school_id, status: statusOf(t), presencas: t.attendances?.[0]?.count ?? 0, date: t.date, title: t.title, escola: t.beneficiary_name,
   }]))
@@ -106,7 +106,7 @@ export default async function Plano({ searchParams }: { searchParams: Promise<{ 
                       <div className="acts" style={{ flexDirection: 'column', alignItems: 'flex-end' }}>
                         {i.situacao !== 'cancelada' && (p?.pronac
                           ? <Link className="btn btn-dark btn-sm" href={`/listas/nova?plano=${i.id}`}>Criar lista</Link>
-                          : <span className="hint">Projeto sem Pronac: <Link href="/projetos">cadastre</Link> para criar a lista</span>)}
+                          : p && <CadastrarPronac projeto={p.id} nome={p.name} />)}
                         <EditarItem id={i.id} inicial={inicial} op={op} sugestao={sug ? { id: sug.id, rotulo: dia(sug.date) } : undefined} />
                       </div>
                     )}

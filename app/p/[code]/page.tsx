@@ -13,11 +13,11 @@ export default async function Page({ params }: { params: Promise<{ code: string 
   const admin = createAdminClient()
   const { data } = await admin
     .from('trainings')
-    .select('id, title, date, start_time, end_time, instructor, state, keep_open_hours, code, beneficiary_name, beneficiary_cnpj, city, project:projects(name, pronac)')
+    .select('id, title, date, start_time, end_time, instructor, state, keep_open_hours, open_until, code, beneficiary_name, beneficiary_cnpj, city, project:projects(name, pronac)')
     .eq('code', code)
     .maybeSingle()
   if (!data) notFound()
-  const t = data as unknown as Pick<Training, 'id' | 'title' | 'date' | 'start_time' | 'end_time' | 'instructor' | 'state' | 'keep_open_hours' | 'code' | 'beneficiary_name' | 'beneficiary_cnpj' | 'city'> & {
+  const t = data as unknown as Pick<Training, 'id' | 'title' | 'date' | 'start_time' | 'end_time' | 'instructor' | 'state' | 'keep_open_hours' | 'open_until' | 'code' | 'beneficiary_name' | 'beneficiary_cnpj' | 'city'> & {
     project: Pick<Project, 'name' | 'pronac'>
   }
   const status = statusOf(t)

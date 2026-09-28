@@ -1,4 +1,4 @@
-import { JANELAS_ESTENDIDAS, cnpjValid, onlyDigits } from './format'
+import { JANELAS_ESTENDIDAS, cnpjValid, onlyDigits, statusOf } from './format'
 
 // Regras da Capacitação (mesmas ao criar e ao corrigir a lista).
 
@@ -48,4 +48,22 @@ export function validarCapacitacao(e: Entrada):
   if (!Number.isInteger(c.expected_count) || c.expected_count < 1) return falha('expected_count', 'Informe quantos participantes são esperados.')
   if (c.keep_open_hours !== null && !(JANELAS_ESTENDIDAS as readonly number[]).includes(c.keep_open_hours)) return falha('keep_open_hours', 'Escolha por quanto tempo a lista fica aberta.')
   return { ok: true, capacitacao: c }
+}
+
+/**
+ * Lista criada depois que o encontro já passou (ex.: registrar a presença de uma capacitação do plano que
+ * aconteceu sem lista): recebe assinaturas pelo prazo escolhido (48 h se nenhum), contado da criação, e fecha
+ * sozinha. Encontro que ainda não terminou segue o horário: null.
+ */
+export function abertaAte(c: Pick<DadosCapacitacao, 'date' | 'start_time' | 'end_time' | 'keep_open_hours'>, agora = new Date()) {
+  if (statusOf({ ...c, state: 'auto', open_until: null }, agora) !== 'done') return null
+  return new Date(agora.getTime() + (c.keep_open_hours ?? 48) * 3600e3).toISOString()
+}
+
+/**
+ * Ao corrigir uma lista: se a nova data é de um encontro que ainda não terminou, o prazo de lista retroativa
+ * sai e ela volta a seguir o horário (não recebe assinaturas antes do encontro). Data passada não reabre.
+ */
+export function prazoNaCorrecao(c: Pick<DadosCapacitacao, 'date' | 'start_time' | 'end_time' | 'keep_open_hours'>, agora = new Date()) {
+  return statusOf({ ...c, state: 'auto', open_until: null }, agora) === 'done' ? {} : { open_until: null }
 }

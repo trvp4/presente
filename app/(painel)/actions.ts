@@ -3,7 +3,7 @@ import { randomInt } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getStaff } from '@/lib/supabase/server'
-import { validarCapacitacao } from '@/lib/capacitacao'
+import { abertaAte, prazoNaCorrecao, validarCapacitacao } from '@/lib/capacitacao'
 import { validarProjeto } from '@/lib/projeto'
 import { escolaDaLista } from '@/lib/espacos/banco'
 import type { DadosCapacitacao } from '@/lib/capacitacao'
@@ -118,7 +118,7 @@ export async function createTraining(_prev: TrainingState, form: FormData): Prom
     const code = newCode()
     const { data, error } = await supabase
       .from('trainings')
-      .insert({ ...v.capacitacao, code, school_id })
+      .insert({ ...v.capacitacao, code, school_id, open_until: abertaAte(v.capacitacao) })
       .select('id, code')
       .single()
     if (!error && data) {
@@ -139,7 +139,7 @@ export async function updateTraining(id: string, dados: Record<string, unknown>)
   const v = validarCapacitacao(dados)
   if (!v.ok) return { error: v.error, field: v.field }
   if (await projetoSemPronac(supabase, v.capacitacao.project_id)) return { error: 'Cadastre o Pronac do projeto (em Projetos) antes de usá-lo numa lista.', field: 'project_id' }
-  const { error } = await supabase.from('trainings').update({ ...v.capacitacao, school_id: await escolaDaCapacitacao(supabase, v.capacitacao) }).eq('id', id)
+  const { error } = await supabase.from('trainings').update({ ...v.capacitacao, school_id: await escolaDaCapacitacao(supabase, v.capacitacao), ...prazoNaCorrecao(v.capacitacao) }).eq('id', id)
   if (error) return { error: 'Não foi possível salvar a correção. Tente de novo.' }
   revalidatePath('/', 'layout')
   revalidatePath(`/listas/${id}`)

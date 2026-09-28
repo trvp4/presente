@@ -5,6 +5,7 @@ import { janelaTexto, longDate, maskCnpjInput, swatch, type Project } from '@/li
 import { CopyButton, QrCanvas } from '@/components/client'
 import CityPicker from '@/components/CityPicker'
 import { createTraining, type TrainingState } from '../../actions'
+import { abertaAte } from '@/lib/capacitacao'
 
 export type School = { name: string; cnpj: string; city: string }
 // Item do plano de capacitações que vira esta lista (vem de /plano → "Criar lista")
@@ -104,7 +105,12 @@ export default function Wizard({ projects, schools, instructors, origin, today, 
               <input id="end_time" name="end_time" type="time" value={form.end} onChange={set('end')} />
               <span className="err">{fieldErr('end_time')}</span>
             </div>
-            <p className="hint" style={{ gridColumn: 'span 6', margin: '-4px 0 0' }}>{janelaTexto(form.date, form.start, form.end, Number(form.janela) || null)}</p>
+            <p className="hint" style={{ gridColumn: 'span 6', margin: '-4px 0 0' }}>
+              {/^\d{4}-\d{2}-\d{2}$/.test(form.date) && form.end > form.start &&
+               abertaAte({ date: form.date, start_time: form.start, end_time: form.end, keep_open_hours: Number(form.janela) || null }) !== null
+                ? <><b>Este encontro já aconteceu.</b> A lista abre assim que for criada e recebe assinaturas por {({ 72: '72 horas', 168: '7 dias' } as Record<string, string>)[form.janela] ?? '48 horas'} (escolha outro prazo em Aceitar assinaturas); depois fecha sozinha.</>
+                : janelaTexto(form.date, form.start, form.end, Number(form.janela) || null)}
+            </p>
             <div className="f s3">
               <label htmlFor="keep_open_hours">Aceitar assinaturas</label>
               <select id="keep_open_hours" name="keep_open_hours" value={form.janela} onChange={e => setForm(v => ({ ...v, janela: e.target.value }))}>

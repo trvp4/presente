@@ -4,6 +4,7 @@ import { useId, useState } from 'react'
 import { useAcao } from '@/components/client'
 import CityPicker from '@/components/CityPicker'
 import { excluirItem, ligarLista, salvarItem, type DadosItem } from './actions'
+import { updateProject } from '../actions'
 
 type Opcao = { id: string; rotulo: string }
 export type Opcoes = { projetos: Opcao[]; escolas: Opcao[]; listasLivres: Opcao[] }
@@ -73,4 +74,20 @@ export function EditarItem({ id, inicial, op, sugestao }: { id: string; inicial:
 export function Desligar({ id }: { id: string }) {
   const [pendente, rodar] = useAcao()
   return <button className="btn btn-ghost btn-sm" disabled={pendente} onClick={() => confirm('Desligar esta lista do item do plano? A lista continua existindo.') && rodar(() => ligarLista(id, null), 'Lista desligada do plano.')}>Desligar</button>
+}
+
+// Projeto sem Pronac não tem lista (o Pronac vai no documento). Cadastrar aqui evita ir até Projetos.
+export function CadastrarPronac({ projeto, nome }: { projeto: string; nome: string }) {
+  const [aberto, setAberto] = useState(false)
+  const [pronac, setPronac] = useState('')
+  const [pendente, rodar] = useAcao()
+  const u = useId()
+  if (!aberto) return <button className="btn btn-dark btn-sm" onClick={() => setAberto(true)}>Cadastrar Pronac</button>
+  return (
+    <form className="es-inline" style={{ justifyContent: 'flex-end' }} onSubmit={e => { e.preventDefault(); rodar(() => updateProject(projeto, { name: nome, pronac }), `Pronac de ${nome} cadastrado. Agora dá para criar a lista.`, () => setAberto(false)) }}>
+      <div className="f curto"><label htmlFor={u}>Pronac de {nome}</label><input id={u} className="mono" inputMode="numeric" required autoFocus value={pronac} onChange={e => setPronac(e.target.value)} /></div>
+      <button className="btn btn-dark btn-sm" disabled={pendente}>Salvar</button>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAberto(false)}>Cancelar</button>
+    </form>
+  )
 }
