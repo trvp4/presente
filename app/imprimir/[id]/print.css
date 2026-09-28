@@ -1,0 +1,30 @@
+/* Reproduz o modelo em Word: A4, margens 2,5 cm (cima/baixo) e 3 cm (laterais), Calibri 11 pt,
+   logo do projeto centralizado, dados em negrito e tabela numerada com bordas finas. */
+.print-wrap{min-height:100%;background:var(--ground);padding:16px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.print-bar{width:min(210mm,100%);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.sheet-a4{background:#fff;color:#000;width:min(210mm,100%);min-height:297mm;padding:25mm 30mm;font-family:var(--font-calibri),Calibri,Carlito,Arial,sans-serif;font-size:11pt;line-height:1.08;box-shadow:0 10px 30px -15px rgba(0,0,0,.3)}
+.sheet-a4 .sheet-logo{display:block;width:5.35cm;height:2.34cm;object-fit:contain;margin:0 auto 11pt}
+.sheet-a4 h1{font-size:11pt;font-weight:700;text-align:center;margin:0 0 8pt}
+.sheet-a4 p{margin:0 0 8pt}
+.sheet-a4 .theme{margin-bottom:16pt}
+.sheet-a4 table{width:100%;border-collapse:collapse;table-layout:fixed}
+.sheet-a4 col.c-name{width:48%}
+.sheet-a4 col.c-cpf{width:22%}
+.sheet-a4 col.c-sig{width:30%}
+.sheet-a4 th,.sheet-a4 td{border:.5pt solid #000;padding:.18cm;text-align:left;vertical-align:middle}
+.sheet-a4 th{font-weight:700}
+.sheet-a4 td{height:.93cm}
+.sheet-a4 td .n{display:inline-block;min-width:.64cm}
+.sheet-a4 td.sig{padding:.05cm .18cm}
+.sheet-a4 td.sig img{display:block;height:.8cm;width:100%;object-fit:contain;object-position:left center}
+.sheet-a4 .nowrap{white-space:nowrap}
+.sheet-a4 tr{break-inside:avoid}
+.sheet-a4 thead{display:table-header-group}
+.sheet-a4 .note{margin-top:14pt;font-size:8pt;color:#555}
+@media print{
+  @page{size:A4;margin:25mm 30mm}
+  body,.print-wrap{background:#fff;padding:0}
+  .no-print{display:none!important}
+  .sheet-a4{box-shadow:none;padding:0;width:auto;min-height:0}
+}
+@media (max-width:720px){.sheet-a4{padding:12mm 8mm;min-height:0}}

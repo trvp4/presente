@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+.env*.local
+.env
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+.open-next
+.wrangler
+.dev.vars*
+.secrets.env
+backups/
+
+# configuração local do Claude Code (não vai para o repositório)
+CLAUDE.md
+.claude/

@@ -1,0 +1,48 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "presente",
+	// worker gerado pelo OpenNext + tarefa diária (custom-worker.ts)
+	"main": "custom-worker.ts",
+	"compatibility_date": "2026-09-20",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// referência ao próprio worker, exigida pelo OpenNext
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "presente"
+		}
+	],
+	// Valores públicos (os mesmos que vão para o navegador).
+	// A chave secreta NÃO fica aqui: ela é cadastrada com `wrangler secret put SUPABASE_SECRET_KEY`.
+	"vars": {
+		"NEXT_PUBLIC_SUPABASE_URL": "https://oktxtdzeetlxowizeewg.supabase.co",
+		"NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_GyL16RODg60p2utAgS_a6A_nXdRCjMc"
+	},
+	// limite de envios do formulário público: 30 por minuto por IP
+	// (folgado porque uma escola inteira pode sair pela mesma rede)
+	"ratelimits": [
+		{
+			"name": "SIGN_LIMITER",
+			"namespace_id": "1001",
+			"simple": { "limit": 30, "period": 60 }
+		},
+		// login: 5 tentativas por minuto por IP (contra quem tenta adivinhar a senha)
+		{
+			"name": "LOGIN_LIMITER",
+			"namespace_id": "1002",
+			"simple": { "limit": 5, "period": 60 }
+		}
+	],
+	// todo dia às 9h (horário de Brasília) o worker consulta o banco,
+	// para o Supabase gratuito não pausar o projeto por falta de uso
+	"triggers": {
+		"crons": ["0 12 * * *"]
+	},
+	"observability": {
+		"enabled": true
+	}
+}
