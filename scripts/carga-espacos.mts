@@ -1,8 +1,8 @@
 // Carga inicial do Espaços de Leitura a partir dos CSVs de Nath-Automacao/carga/saida
 // (escolas, projetos, vínculos e respostas históricas das planilhas antigas).
 //
-//   npx tsx scripts/carga-espacos.mts            → prévia: mostra o que entraria, não grava nada
-//   npx tsx scripts/carga-espacos.mts --gravar   → grava (pode rodar de novo: nada duplica)
+//   npx tsx scripts/carga-espacos.mts <pasta dos CSVs>            → prévia: mostra o que entraria, não grava nada
+//   npx tsx scripts/carga-espacos.mts <pasta dos CSVs> --gravar   → grava (pode rodar de novo: nada duplica)
 //
 // Escola e projeto que já existem no Presente (mesmo nome normalizado) são reaproveitados.
 // Uma resposta já carregada não é sobrescrita, para não perder a revisão da Equipe.
@@ -14,7 +14,8 @@ import { paraRegras } from '../lib/espacos/banco'
 import { processar } from '../lib/espacos/regras'
 import { lerHora, lerObservacoes } from '../lib/plano'
 
-const PASTA = process.argv.find(a => !a.startsWith('--') && a.includes('saida')) ?? 'C:/Users/USER/Documents/Nath-Automacao/carga/saida'
+const PASTA = process.argv.slice(2).find(a => !a.startsWith('--'))
+if (!PASTA) { console.error('Informe a pasta dos CSVs: npx tsx scripts/carga-espacos.mts <pasta> [--gravar]'); process.exit(1) }
 const GRAVAR = process.argv.includes('--gravar')
 
 /** CSV com aspas ("" dentro de aspas = aspas), vírgula e quebras de linha dentro de campos. */
@@ -157,5 +158,5 @@ if (GRAVAR) {
   if (r.error) falhar('plano', r.error)
   console.log('Plano gravado. Confira em /plano.')
 } else {
-  console.log('\nNada foi gravado. Para gravar: npx tsx scripts/carga-espacos.mts --gravar')
+  console.log('\nNada foi gravado. Para gravar: npx tsx scripts/carga-espacos.mts <pasta> --gravar')
 }
