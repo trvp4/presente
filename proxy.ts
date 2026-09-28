@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { cookieOptions } from '@/lib/supabase/sessao'
 
 // Renova a sessão do Supabase a cada navegação e manda quem não está logado para /login.
 // A página pública do voluntário (/p/...) não passa por aqui.
@@ -10,6 +11,7 @@ export async function proxy(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      cookieOptions,
       cookies: {
         getAll() {
           return request.cookies.getAll()

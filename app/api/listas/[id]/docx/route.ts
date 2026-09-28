@@ -1,15 +1,17 @@
 import { getStaff } from '@/lib/supabase/server'
+import { registrar } from '@/lib/registro'
 import { buildListaDocx } from '@/lib/docx-lista'
 import type { Attendance, Project, Training } from '@/lib/format'
 
 // Lista de presença em Word (.docx), no modelo da empresa.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { supabase, isStaff } = await getStaff()
+  const { supabase, isStaff, email } = await getStaff()
   if (!isStaff) return new Response('Não autorizado', { status: 401 })
 
   const { data: t } = await supabase.from('trainings').select('*, project:projects(*)').eq('id', id).maybeSingle()
   if (!t) return new Response('Lista não encontrada', { status: 404 })
+  await registrar(supabase, email, 'documento', t)
   const { data } = await supabase.from('attendances').select('*').eq('training_id', id).order('created_at')
 
   const tr = t as Training & { project: Project }
