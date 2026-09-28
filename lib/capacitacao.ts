@@ -67,3 +67,12 @@ export function abertaAte(c: Pick<DadosCapacitacao, 'date' | 'start_time' | 'end
 export function prazoNaCorrecao(c: Pick<DadosCapacitacao, 'date' | 'start_time' | 'end_time' | 'keep_open_hours'>, agora = new Date()) {
   return statusOf({ ...c, state: 'auto', open_until: null }, agora) === 'done' ? {} : { open_until: null }
 }
+
+/** Chave "Aceitando presenças": ligar reabre por 48 h a partir de agora e a lista fecha sozinha depois. */
+export const REABRIR_HORAS = 48
+export const reabrir = (agora = new Date()) =>
+  ({ state: 'auto' as const, open_until: new Date(agora.getTime() + REABRIR_HORAS * 3600e3).toISOString() })
+/** Desligar a chave: encerra na hora. */
+export const encerrar = () => ({ state: 'closed' as const, open_until: null })
+/** "Voltar a abrir e fechar pelo horário": sem prazo extra. */
+export const peloHorario = () => ({ state: 'auto' as const, open_until: null })

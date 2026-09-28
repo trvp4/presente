@@ -3,7 +3,7 @@ import { randomInt } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getStaff } from '@/lib/supabase/server'
-import { abertaAte, prazoNaCorrecao, validarCapacitacao } from '@/lib/capacitacao'
+import { abertaAte, encerrar, peloHorario, prazoNaCorrecao, reabrir, validarCapacitacao } from '@/lib/capacitacao'
 import { validarProjeto } from '@/lib/projeto'
 import { escolaDaLista } from '@/lib/espacos/banco'
 import type { DadosCapacitacao } from '@/lib/capacitacao'
@@ -146,9 +146,12 @@ export async function updateTraining(id: string, dados: Record<string, unknown>)
   return { id }
 }
 
-export async function setTrainingState(id: string, state: 'auto' | 'open' | 'closed') {
+// Chave "Aceitando presenças": reabrir (por 48 h, depois fecha sozinha), encerrar ou voltar a seguir o horário
+export async function setTrainingState(id: string, acao: 'reabrir' | 'encerrar' | 'horario') {
   const supabase = await staffOrThrow()
-  await supabase.from('trainings').update({ state }).eq('id', id)
+  const mudanca = { reabrir, encerrar, horario: peloHorario }[acao]
+  if (!mudanca) throw new Error('Ação inválida.')
+  await supabase.from('trainings').update(mudanca()).eq('id', id)
   revalidatePath('/', 'layout')
   revalidatePath(`/listas/${id}`)
 }

@@ -43,11 +43,16 @@ export default function Detail({ training: t, initial, origin, projects }: { tra
   const term = q.toLowerCase()
   const filtered = list.filter(a => `${a.full_name} ${a.role}`.toLowerCase().includes(term))
 
+  // lista reaberta pela chave (ou criada depois do encontro): até quando aceita assinaturas
+  const aberta = t.state === 'auto' && t.open_until && new Date(t.open_until) > new Date()
+    ? new Date(t.open_until).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }).replace(',', ' às')
+    : ''
+
   const toggleOpen = () =>
     start(async () => {
-      const next = status === 'live' ? 'closed' : 'open'
-      await setTrainingState(t.id, next)
-      toast(next === 'open' ? 'Lista aberta para presenças' : 'Lista encerrada')
+      const acao = status === 'live' ? 'encerrar' : 'reabrir'
+      await setTrainingState(t.id, acao)
+      toast(acao === 'reabrir' ? 'Lista aberta por 48 horas' : 'Lista encerrada')
     })
 
   const remove = (a: Attendance) => {
@@ -147,12 +152,16 @@ export default function Detail({ training: t, initial, origin, projects }: { tra
               <button role="switch" aria-checked={status === 'live'} aria-label="Aceitando presenças" onClick={toggleOpen} disabled={pending} />
               <span>
                 {status === 'live' ? 'Aceitando presenças agora' : status === 'done' ? 'Lista encerrada' : 'Abre 30 min antes do encontro'}
-                <small>{status === 'live' ? 'Desligue para encerrar a lista.' : 'Ligue para abrir agora.'}</small>
+                <small>
+                  {status === 'live'
+                    ? (aberta ? `Aberta até ${aberta}; desligue para encerrar antes.` : 'Desligue para encerrar a lista.')
+                    : 'Ligue para abrir por 48 horas; depois ela fecha sozinha.'}
+                </small>
               </span>
             </div>
-            {t.state !== 'auto' && (
+            {(t.state !== 'auto' || t.open_until) && (
               <button className="linkish" style={{ alignSelf: 'flex-start' }} disabled={pending}
-                onClick={() => start(async () => { await setTrainingState(t.id, 'auto'); toast('A lista volta a abrir e fechar pelo horário') })}>
+                onClick={() => start(async () => { await setTrainingState(t.id, 'horario'); toast('A lista volta a abrir e fechar pelo horário') })}>
                 Voltar a abrir e fechar pelo horário
               </button>
             )}

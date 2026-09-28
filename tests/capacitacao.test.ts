@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { abertaAte, prazoNaCorrecao, validarCapacitacao } from '@/lib/capacitacao'
+import { abertaAte, encerrar, prazoNaCorrecao, reabrir, validarCapacitacao } from '@/lib/capacitacao'
 import { statusOf } from '@/lib/format'
 
 const valida = {
@@ -77,5 +77,22 @@ describe('Lista criada depois do encontro', () => {
   it('corrigir a data para um encontro futuro tira o prazo; para uma data passada, não mexe', () => {
     expect(prazoNaCorrecao(lista('2026-10-06'), agora)).toEqual({ open_until: null })
     expect(prazoNaCorrecao(lista('2026-08-07'), agora)).toEqual({})
+  })
+})
+
+describe('Chave "Aceitando presenças"', () => {
+  const agora = new Date('2026-09-28T15:00:00-03:00')
+  const antiga = { date: '2026-09-25', start_time: '10:30', end_time: '12:30', keep_open_hours: null }
+
+  it('ligar reabre por 48 h a partir de agora; depois a lista fecha sozinha', () => {
+    const r = reabrir(agora)
+    expect(r).toEqual({ state: 'auto', open_until: '2026-09-30T18:00:00.000Z' })
+    expect(statusOf({ ...antiga, ...r }, new Date('2026-09-30T14:59:00-03:00'))).toBe('live')
+    expect(statusOf({ ...antiga, ...r }, new Date('2026-09-30T15:01:00-03:00'))).toBe('done')
+  })
+
+  it('desligar encerra na hora e tira o prazo', () => {
+    expect(encerrar()).toEqual({ state: 'closed', open_until: null })
+    expect(statusOf({ ...antiga, ...reabrir(agora), ...encerrar() }, agora)).toBe('done')
   })
 })
