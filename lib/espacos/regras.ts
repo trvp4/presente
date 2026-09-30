@@ -12,24 +12,33 @@ export const SITUACAO_RESPOSTA = { VALIDA: 'válida', REVISAO: 'em revisão', SU
 export const SITUACAO_OBRIGACAO = { RESPONDIDA: 'respondida', REVISAO: 'em revisão', PENDENTE: 'pendente', DISPENSADA: 'dispensada', FORA: 'fora do ciclo' } as const
 
 // Formulário → campos originais da resposta
-/** Campo da resposta ← trechos do enunciado da pergunta (sem acento, minúsculo). Ordem importa. */
+/**
+ * Campo da resposta ← trechos do enunciado da pergunta (sem acento, minúsculo). Ordem importa: cada campo
+ * tenta seus trechos na ordem, e o primeiro que casar leva a pergunta. Vale para o formulário antigo e para o
+ * novo "Acompanhamento Mensal" (projeto e ano de edição separados, mês e ano separados, faixas).
+ */
 const PERGUNTAS: [string, string[]][] = [
   ['carimbo', ['carimbo de data', 'timestamp']],
   ['email_respondente', ['endereco de e-mail', 'e-mail', 'email']],
-  ['projeto_informado', ['projeto recebido']],
-  ['escola_informada', ['instituicao recebeu', 'qual a instituicao']],
+  ['projeto_informado', ['projeto recebido', 'qual projeto foi entregue']],
+  ['projeto_edicao', ['ano de edicao']],
+  ['escola_informada', ['instituicao recebeu', 'qual a instituicao', 'nome da instituicao']],
+  ['responsavel_resposta', ['responsavel por estar respondendo']],
   ['mes_informado', ['em que mes', 'mes de referencia']],
+  ['mes_ano', ['de qual ano']],
+  ['gestao', ['responsavel pela organizacao']],
   ['atores', ['atores envolvidos']],
   ['rede', ['rede de atores']],
   ['potenciais', ['principais potenciais']],
   ['desafios', ['principais desafios']],
   ['faixa_uso_texto', ['percentual de alunos']],
-  ['visitas_texto', ['utilizacao do espaco', 'total de visitas']],
-  ['emprestimos_texto', ['emprestimo de livros']],
+  // formulário novo: número de estudantes que usaram o espaço (antigo: total de visitas)
+  ['visitas_texto', ['numero aproximado de estudantes', 'total de visitas', 'utilizacao do espaco']],
+  ['emprestimos_texto', ['numero exato de emprestimos', 'emprestimo de livros']],
   ['atividades_texto', ['de acordo com as atividades', 'total de eventos']],
   ['cronograma', ['cronograma mensal']],
   ['atividades_turmas', ['quais turmas']],
-  ['atividade_mais_realizada', ['atividade mais realizada']],
+  ['atividade_mais_realizada', ['atividade mais realizada', 'principais atividades realizadas']],
   ['faixa_etaria', ['faixa etaria']],
   ['fora_cronograma', ['alem do seguimento']],
   ['planejadas', ['sendo planejadas']],
@@ -43,6 +52,16 @@ const PERGUNTAS: [string, string[]][] = [
   ['impacto_comunidade', ['impactou dentro da comunidade']],
   ['melhorias', ['podemos melhorar']],
   ['anexos', ['anexos']],
+  // só no formulário novo
+  ['uso_frequencia', ['foi utilizado durante o mes']],
+  ['formas_uso', ['principais formas de utilizacao']],
+  ['temas', ['temas ou categorias']],
+  ['emprestimos_faixa', ['emprestimo de livros para os estudantes']],
+  ['emprestimos_professores', ['emprestimo de livros para professores']],
+  ['emprestimos_professores_titulos', ['quantos e quais titulos']],
+  ['atividades_faixa', ['quantas atividades pedagogicas']],
+  ['titulos_procurados', ['livros ou titulos mais procurados']],
+  ['resultados_mes', ['principais resultados']],
 ]
 /** Campos que vêm do formulário (o conteúdo original da resposta). */
 export const CAMPOS_ORIGINAIS = PERGUNTAS.map(([campo]) => campo)
@@ -72,6 +91,13 @@ export function respostaDoFormulario(linha: unknown[], mapa: Record<string, numb
     const v = mapa[campo] === undefined ? '' : linha[mapa[campo]]
     r[campo] = v ?? ''
   }
+  // formulário novo: "Cantos de Leitura" + "2026" e "Setembro" + "2026" viram um campo só, como no antigo
+  const juntar = (base: unknown, extra: unknown) => {
+    const b = String(base ?? '').trim(), x = String(extra ?? '').trim()
+    return x && !/20d{2}/.test(b) ? `${b} ${x}` : b
+  }
+  if (String(r.projeto_edicao).trim()) r.projeto_informado = juntar(r.projeto_informado, r.projeto_edicao)
+  if (String(r.mes_ano).trim()) r.mes_informado = juntar(r.mes_informado, r.mes_ano)
   if (!(r.carimbo instanceof Date)) r.carimbo = r.carimbo ? new Date(r.carimbo) : ''
   if (r.carimbo instanceof Date && isNaN(r.carimbo.getTime())) r.carimbo = ''
   const quando = r.carimbo instanceof Date ? formatarData(r.carimbo, 'yyyyMMddHHmmss') : 'SEMDATA' + numeroLinha

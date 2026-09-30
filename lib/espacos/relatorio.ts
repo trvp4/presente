@@ -31,6 +31,7 @@ export function listarPatrocinadores(vinculos: Registro[]) {
 }
 
 const CAMPOS_RELATO: [string, string, 'resultados' | 'desafios'][] = [
+  ['resultados_mes', 'Resultados do mês', 'resultados'],
   ['boas_praticas', 'Boas práticas', 'resultados'],
   ['impacto_comunidade', 'Impacto na comunidade', 'resultados'],
   ['alfabetizacao', 'Alfabetização', 'resultados'],
