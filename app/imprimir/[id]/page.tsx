@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { Carlito } from 'next/font/google'
 import { getStaff } from '@/lib/supabase/server'
+import { registrar } from '@/lib/registro'
 import { REALIZACAO, brDate, fmtCnpj, fmtCpf, hm, todayISO, type Attendance, type Project, type Training } from '@/lib/format'
 import PrintButton from './PrintButton'
 import './print.css'
@@ -13,10 +14,11 @@ export const metadata = { title: 'Lista para imprimir' }
 // Lista no modelo oficial da empresa (Word "Lista de presença – Capacitação"), pronta para "Salvar como PDF".
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { supabase, isStaff } = await getStaff()
+  const { supabase, isStaff, email } = await getStaff()
   if (!isStaff) notFound()
   const { data: t } = await supabase.from('trainings').select('*, project:projects(*)').eq('id', id).maybeSingle()
   if (!t) notFound()
+  await registrar(supabase, email, 'impressao', t)
   const { data } = await supabase.from('attendances').select('*').eq('training_id', id).order('created_at')
   const training = t as Training & { project: Project }
   const p = training.project

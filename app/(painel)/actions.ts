@@ -3,6 +3,7 @@ import { randomInt } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getStaff } from '@/lib/supabase/server'
+import { registrar } from '@/lib/registro'
 import { abertaAte, encerrar, peloHorario, prazoNaCorrecao, reabrir, validarCapacitacao } from '@/lib/capacitacao'
 import { validarProjeto } from '@/lib/projeto'
 import { escolaDaLista } from '@/lib/espacos/banco'
@@ -164,7 +165,10 @@ export async function setPdfSent(id: string, sent: boolean) {
 }
 
 export async function deleteTraining(id: string) {
-  const supabase = await staffOrThrow()
+  const { supabase, isStaff, email } = await getStaff()
+  if (!isStaff) throw new Error('Acesso não autorizado.')
+  const { data: t } = await supabase.from('trainings').select('id, title, attendances(count)').eq('id', id).maybeSingle()
+  if (t) await registrar(supabase, email, 'exclusao_lista', t, `${(t.attendances as { count: number }[])?.[0]?.count ?? 0} assinatura(s) apagadas junto`)
   const { error } = await supabase.from('trainings').delete().eq('id', id)
   if (error) throw new Error('Não foi possível excluir a lista.')
   revalidatePath('/', 'layout')
@@ -172,7 +176,11 @@ export async function deleteTraining(id: string) {
 }
 
 export async function removeAttendance(id: string, trainingId: string) {
-  const supabase = await staffOrThrow()
+  const { supabase, isStaff, email } = await getStaff()
+  if (!isStaff) throw new Error('Acesso não autorizado.')
+  const { data: a } = await supabase.from('attendances').select('full_name, training:trainings(id, title)').eq('id', id).maybeSingle()
+  const lista = a?.training as unknown as { id: string; title: string } | null
+  if (a && lista) await registrar(supabase, email, 'remocao_assinatura', lista, `assinatura de ${a.full_name}`)
   await supabase.from('attendances').delete().eq('id', id)
   revalidatePath(`/listas/${trainingId}`)
   revalidatePath('/', 'layout')

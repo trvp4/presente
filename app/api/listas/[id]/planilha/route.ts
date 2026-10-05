@@ -1,15 +1,17 @@
 import { getStaff } from '@/lib/supabase/server'
+import { registrar } from '@/lib/registro'
 import { planilhaCsv } from '@/lib/planilha'
 import { REALIZACAO, brDate, fmtCnpj, hm, fmtCpf, timeSP, type Attendance, type Project, type Training } from '@/lib/format'
 
 // Planilha (CSV com ; e BOM, abre direto no Excel em português).
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { supabase, isStaff } = await getStaff()
+  const { supabase, isStaff, email } = await getStaff()
   if (!isStaff) return new Response('Não autorizado', { status: 401 })
 
   const { data: t } = await supabase.from('trainings').select('*, project:projects(*)').eq('id', id).maybeSingle()
   if (!t) return new Response('Lista não encontrada', { status: 404 })
+  await registrar(supabase, email, 'planilha', t)
   const { data } = await supabase.from('attendances').select('full_name, role, cpf, created_at').eq('training_id', id).order('created_at')
 
   const tr = t as Training & { project: Project }
