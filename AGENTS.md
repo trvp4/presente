@@ -12,7 +12,7 @@ Listas de presença digitais das Capacitações do Instituto Cuidare: Next.js 16
 
 `SUPABASE_SECRET_KEY` e `TURNSTILE_SECRET_KEY` dão acesso aos CPFs. Trate como senha: referencie sempre pelo nome da variável, leia o valor de `.env.local` dentro de scripts e deixe fora de código, Git, logs e respostas. O código que usa a chave secreta fica em módulos com `import 'server-only'` (`lib/supabase/admin.ts`).
 
-Para tarefas de conta (trocar chave, Turnstile, novo usuário da equipe, migração), use o assistente: `npm run assistente -- chave | turnstile | equipe | migracao | formulario`. Assim a pessoa digita os segredos escondidos no terminal, e não na conversa.
+Para tarefas de conta (trocar chave, Turnstile, novo usuário da equipe, migração), use o assistente: `npm run assistente -- chave | turnstile | equipe | migracao | formulario | google`. Assim a pessoa digita os segredos escondidos no terminal, e não na conversa.
 
 ## Banco de dados
 

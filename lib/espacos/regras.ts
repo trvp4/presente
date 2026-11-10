@@ -94,7 +94,7 @@ export function respostaDoFormulario(linha: unknown[], mapa: Record<string, numb
   // formulário novo: "Cantos de Leitura" + "2026" e "Setembro" + "2026" viram um campo só, como no antigo
   const juntar = (base: unknown, extra: unknown) => {
     const b = String(base ?? '').trim(), x = String(extra ?? '').trim()
-    return x && !/20d{2}/.test(b) ? `${b} ${x}` : b
+    return x && !/\b20\d{2}\b/.test(b) ? `${b} ${x}` : b
   }
   if (String(r.projeto_edicao).trim()) r.projeto_informado = juntar(r.projeto_informado, r.projeto_edicao)
   if (String(r.mes_ano).trim()) r.mes_informado = juntar(r.mes_informado, r.mes_ano)

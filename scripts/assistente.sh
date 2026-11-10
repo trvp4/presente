@@ -200,6 +200,7 @@ finish() {
 #   npm run assistente -- equipe      dá acesso a uma nova pessoa da Equipe
 #   npm run assistente -- migracao    roda um arquivo SQL no Supabase e publica
 #   npm run assistente -- formulario  gera o segredo do Google Forms do Espaços de Leitura
+#   npm run assistente -- google      conta do Google para ler a planilha de respostas do Espaços de Leitura
 #
 # Valores secretos são digitados escondidos e nunca aparecem na tela.
 
@@ -464,13 +465,70 @@ formulario)
   finish
   ;;
 
+# ── 6. Ler a planilha de respostas do Espaços de Leitura (em vez do script do Forms) ──
+google)
+  TOTAL_STAGES=4
+  banner "Presente · ler a planilha de respostas do Espaços de Leitura"
+  GC="https://console.cloud.google.com"
+
+  stage "Criar um projeto no Google Cloud e ligar a API de planilhas"
+  say "Use a sua conta Google (não precisa ser a da Natália). É grátis."
+  open_url "$GC/projectcreate"
+  step "Nome do projeto: presente  →  Criar. Espere ficar pronto (sino no alto)."
+  pause "Enter quando o projeto existir"
+  open_url "$GC/apis/library/sheets.googleapis.com"
+  step "Confira no alto que o projeto 'presente' está selecionado e clique em 'Ativar'."
+  pause "Enter quando a Google Sheets API estiver ativada"
+
+  stage "Criar a conta de serviço (o 'e-mail' do Presente)"
+  open_url "$GC/iam-admin/serviceaccounts/create"
+  step "Nome: presente-planilhas  →  'Criar e continuar'."
+  step "Não escolha nenhum papel: clique em 'Continuar' e depois em 'Concluir'."
+  pause "Enter quando a conta aparecer na lista"
+
+  stage "Baixar a chave da conta e guardar no Presente"
+  step "Na lista, clique na conta presente-planilhas → aba 'Chaves'."
+  step "'Adicionar chave' → 'Criar nova chave' → JSON → 'Criar'. Um arquivo .json será baixado."
+  note "Se aparecer que a criação de chaves está bloqueada por política da organização, use uma conta Google pessoal."
+  pause "Enter quando o arquivo tiver sido baixado"
+  PADRAO=$(ls -t "$HOME"/Downloads/*.json 2>/dev/null | head -n1 || true)
+  while :; do
+    if [[ -n "$PADRAO" ]]; then
+      printf '  %sArquivo da chave%s %s[Enter usa %s]%s ' "$BOLD" "$RESET" "$DIM" "$(basename "$PADRAO")" "$RESET"
+    else
+      printf '  %sCaminho do arquivo .json da chave:%s ' "$BOLD" "$RESET"
+    fi
+    read -r ARQ || true
+    ARQ="${ARQ%\"}"; ARQ="${ARQ#\"}"; [[ -z "$ARQ" ]] && ARQ="$PADRAO"
+    CONTA_EMAIL=$(node -e "const c=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));if(c.type!=='service_account'||!c.private_key)process.exit(1);console.log(c.client_email)" "$ARQ" 2>/dev/null) && break
+    warn "esse arquivo não é a chave JSON de uma conta de serviço; tente de novo"
+  done
+  CHAVE_B64=$(node -e "process.stdout.write(Buffer.from(JSON.stringify(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')))).toString('base64'))" "$ARQ")
+  write_env GOOGLE_CONTA_SERVICO "$CHAVE_B64"
+  write_devvars GOOGLE_CONTA_SERVICO "$CHAVE_B64"
+  cf_secret GOOGLE_CONTA_SERVICO "$CHAVE_B64" || true
+  if confirm "Apagar o arquivo baixado agora que a chave está guardada? (recomendado)"; then
+    rm -f "$ARQ" && printf '  %s✓ apagado%s %s\n' "$GREEN" "$RESET" "$(basename "$ARQ")"
+  fi
+
+  stage "Passar o e-mail para a Natália"
+  say "Mande este e-mail para a Natália (ele não é segredo):"
+  printf '\n      %s%s%s\n\n' "$BOLD" "$CONTA_EMAIL" "$RESET"
+  step "Ela liga o formulário a uma planilha e compartilha a planilha com esse e-mail, como Leitor."
+  note "Passo a passo para ela: scripts/google-forms/COMO-INSTALAR.md (seção 'Jeito fácil')."
+  step "Quando ela mandar o link da planilha, peça ao Claude para colocar no Presente e publicar."
+  pause "Enter para terminar"
+  finish
+  ;;
+
 *)
   printf '\nUso: npm run assistente -- <tarefa>\n\n'
   printf '  chave       troca a chave secreta do Supabase\n'
   printf '  turnstile   ativa a verificação "não sou robô"\n'
   printf '  equipe      dá acesso a uma nova pessoa da Equipe\n'
   printf '  migracao    roda um arquivo SQL no Supabase e publica\n'
-  printf '  formulario  gera o segredo do Google Forms do Espaços de Leitura\n\n'
+  printf '  formulario  gera o segredo do Google Forms do Espaços de Leitura\n'
+  printf '  google      conta do Google para ler a planilha de respostas do Espaços de Leitura\n\n'
   exit 1
   ;;
 esac

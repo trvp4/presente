@@ -1,5 +1,5 @@
 // Abre o assistente (scripts/assistente.sh) no Git Bash, que já vem com o Git para Windows.
-// Uso: npm run assistente -- chave | turnstile | equipe | migracao
+// Uso: npm run assistente -- chave | turnstile | equipe | migracao | formulario | google
 import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'

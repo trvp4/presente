@@ -1,5 +1,22 @@
 # Ligar o Google Forms do Espaços de Leitura à Central
 
+## Jeito fácil (recomendado): compartilhar a planilha de respostas
+
+Sem script e sem código. A Central lê a planilha sozinha, de hora em hora. Feito **uma vez**, por quem é dona do formulário.
+
+1. Abra o formulário no modo de edição → aba **Respostas** → **Vincular ao Planilhas** (ou **Ver no Planilhas**, se já existir) → **Criar** (ou abrir a que já existe).
+2. Na planilha que abriu, clique em **Compartilhar** (canto superior direito).
+3. Cole o e-mail do Presente (quem cuida da Central te passa, termina em `iam.gserviceaccount.com`), escolha **Leitor**, desmarque **Notificar pessoas** e clique em **Compartilhar**. Se o Google avisar que o e-mail é de fora da organização, confirme.
+4. Copie o link da planilha (barra de endereço) e mande para quem cuida da Central.
+
+Pronto: as respostas que já existem e as novas entram sozinhas. Não renomeie as perguntas essenciais (projeto, instituição, mês) e não apague nem reordene as colunas da planilha.
+
+Se o formulário já tinha o script abaixo instalado, ele pode ficar ou ser removido: a Central não duplica as respostas.
+
+---
+
+## Jeito antigo: script no formulário
+
 Feito **uma vez**, por quem é dona do formulário, no computador, logada na conta Google do formulário. Leva uns 10 minutos.
 
 Depois disso, cada resposta que uma escola enviar aparece sozinha na Central. As escolas continuam usando o mesmo formulário de sempre, sem mudar nada para elas.

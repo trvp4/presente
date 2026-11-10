@@ -20,7 +20,10 @@
 	// A chave secreta NÃO fica aqui: ela é cadastrada com `wrangler secret put SUPABASE_SECRET_KEY`.
 	"vars": {
 		"NEXT_PUBLIC_SUPABASE_URL": "https://oktxtdzeetlxowizeewg.supabase.co",
-		"NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_GyL16RODg60p2utAgS_a6A_nXdRCjMc"
+		"NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_GyL16RODg60p2utAgS_a6A_nXdRCjMc",
+		// planilha de respostas do formulário do Espaços de Leitura (link ou código), compartilhada
+		// com a conta de serviço do Google (segredo GOOGLE_CONTA_SERVICO); vazio = não lê planilha
+		"PLANILHA_ESPACOS": ""
 	},
 	// limite de envios do formulário público: 30 por minuto por IP
 	// (folgado porque uma escola inteira pode sair pela mesma rede)
@@ -37,10 +40,10 @@
 			"simple": { "limit": 5, "period": 60 }
 		}
 	],
-	// todo dia às 9h (horário de Brasília) o worker consulta o banco,
-	// para o Supabase gratuito não pausar o projeto por falta de uso
+	// de hora em hora o worker consulta o banco (para o Supabase gratuito não pausar o projeto
+	// por falta de uso) e lê a planilha de respostas do Espaços de Leitura
 	"triggers": {
-		"crons": ["0 12 * * *"]
+		"crons": ["0 * * * *"]
 	},
 	"observability": {
 		"enabled": true
