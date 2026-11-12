@@ -66,7 +66,7 @@ export async function desfazerDispensa(ciclo: string, vinculo: string): Promise<
 
 // ---------------- revisão ----------------
 export type Revisao = {
-  vinculo_manual: string; mes_manual: string; visitas: string; emprestimos: string; eventos: string
+  vinculo_manual: string; mes_manual: string; visitas: string; emprestimos: string; eventos: string; estudantes: string
   decisao: '' | 'aceitar' | 'descartar'; nota: string; guardar_apelido: boolean
 }
 
@@ -79,12 +79,12 @@ export async function revisar(id: string, d: Revisao): Promise<Resultado> {
     const n = Number(v.replace(',', '.'))
     return Number.isFinite(n) && n >= 0 ? n : NaN
   }
-  const [visitas, emprestimos, eventos] = [numero(d.visitas), numero(d.emprestimos), numero(d.eventos)]
-  if ([visitas, emprestimos, eventos].some(Number.isNaN)) return { error: 'Os números corrigidos precisam ser 0 ou mais.' }
+  const [visitas, emprestimos, eventos, estudantes] = [numero(d.visitas), numero(d.emprestimos), numero(d.eventos), numero(d.estudantes ?? '')]
+  if ([visitas, emprestimos, eventos, estudantes].some(Number.isNaN)) return { error: 'Os números corrigidos precisam ser 0 ou mais.' }
 
   const { data: resposta, error } = await supabase.from('el_respostas').update({
     vinculo_manual: d.vinculo_manual || null, mes_manual: d.mes_manual || null,
-    visitas_corrigidas: visitas, emprestimos_corrigidos: emprestimos, eventos_corrigidos: eventos,
+    visitas_corrigidas: visitas, emprestimos_corrigidos: emprestimos, eventos_corrigidos: eventos, estudantes_corrigidos: estudantes,
     decisao: d.decisao || null, nota_revisao: texto(d.nota) || null,
     revisado_por: name ?? email, revisado_em: new Date().toISOString(),
   }).eq('id', id).select('escola_informada').single()

@@ -70,9 +70,9 @@ type Opcao = { id: string; rotulo: string }
 
 export function Revisar({ id, precisaVinculo, precisaMes, naoLidos, vinculos }: {
   id: string; precisaVinculo: boolean; precisaMes: boolean
-  naoLidos: { visitas: boolean; emprestimos: boolean; eventos: boolean }; vinculos: Opcao[]
+  naoLidos: { visitas: boolean; emprestimos: boolean; eventos: boolean; estudantes: boolean }; vinculos: Opcao[]
 }) {
-  const [d, setD] = useState<A.Revisao>({ vinculo_manual: '', mes_manual: '', visitas: '', emprestimos: '', eventos: '', decisao: '', nota: '', guardar_apelido: true })
+  const [d, setD] = useState<A.Revisao>({ vinculo_manual: '', mes_manual: '', visitas: '', emprestimos: '', eventos: '', estudantes: '', decisao: '', nota: '', guardar_apelido: true })
   const [pendente, rodar] = useAcao()
   const campo = (k: keyof A.Revisao) => ({ value: d[k] as string, onChange: (e: { target: { value: string } }) => setD({ ...d, [k]: e.target.value }) })
   const enviar = (decisao: A.Revisao['decisao']) => {
@@ -80,7 +80,7 @@ export function Revisar({ id, precisaVinculo, precisaMes, naoLidos, vinculos }: 
     if (decisao === 'aceitar' && precisaMes && !d.mes_manual) return toast('Informe o mês antes de aceitar.')
     rodar(() => A.revisar(id, { ...d, decisao }), decisao === 'descartar' ? 'Resposta descartada.' : 'Revisão salva.')
   }
-  const numero = (k: 'visitas' | 'emprestimos' | 'eventos', rotulo: string) => (
+  const numero = (k: 'visitas' | 'emprestimos' | 'eventos' | 'estudantes', rotulo: string) => (
     <div className="f curto"><label htmlFor={`${k}-${id}`}>{rotulo}</label><input id={`${k}-${id}`} inputMode="numeric" {...campo(k)} /></div>
   )
   return (
@@ -94,6 +94,7 @@ export function Revisar({ id, precisaVinculo, precisaMes, naoLidos, vinculos }: 
       )}
       {precisaMes && <div className="f curto"><label htmlFor={`m-${id}`}>Mês de referência</label><input id={`m-${id}`} type="month" {...campo('mes_manual')} /></div>}
       {naoLidos.visitas && numero('visitas', 'Visitas no mês')}
+      {naoLidos.estudantes && numero('estudantes', 'Estudantes no mês')}
       {naoLidos.emprestimos && numero('emprestimos', 'Empréstimos no mês')}
       {naoLidos.eventos && numero('eventos', 'Eventos no mês')}
       <div className="f"><label htmlFor={`n-${id}`}>Nota (opcional)</label><input id={`n-${id}`} maxLength={500} {...campo('nota')} /></div>

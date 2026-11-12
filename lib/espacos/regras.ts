@@ -2,7 +2,7 @@
 // Porte fiel de Nath-Automacao/apps-script/Regras.gs; processar() é o miolo de
 // Sincronizacao.gs (passos 2 a 5) sem a planilha.
 import {
-  PADROES, chaveEscola, chaveTexto, ehMesIso, faixaDeUso, formatarData, hashCurto, lerNumero,
+  PADROES, chaveEscola, chaveTexto, ehMesIso, faixaDeAtividades, faixaDeEmprestimos, faixaDeUso, formatarData, hashCurto, lerNumero,
   lerNumeroSecundario, listaPipe, mesReferencia, mesesEntre, semAcento, type Leitura,
 } from './normalizacao'
 
@@ -27,7 +27,8 @@ const PERGUNTAS: [string, string[]][] = [
   ['faixa_uso_texto', ['percentual de alunos']],
   // "sobre a utilizacao": só "utilizacao do espaco" casava com "formas de utilização do Espaço" do formulário novo
   ['visitas_texto', ['sobre a utilizacao do espaco', 'total de visitas']],
-  ['emprestimos_texto', ['emprestimo de livros']],
+  // "sobre": só "emprestimo de livros" casava com "Houve empréstimo de livros para os estudantes?" do formulário novo
+  ['emprestimos_texto', ['sobre emprestimo de livros', 'total de livros emprestados']],
   ['atividades_texto', ['de acordo com as atividades', 'total de eventos']],
   ['cronograma', ['cronograma mensal']],
   ['atividades_turmas', ['quais turmas']],
@@ -45,6 +46,23 @@ const PERGUNTAS: [string, string[]][] = [
   ['impacto_comunidade', ['impactou dentro da comunidade']],
   ['melhorias', ['podemos melhorar']],
   ['anexos', ['anexos']],
+  // formulário reformulado (nov/2026)
+  ['ano_edicao', ['ano de edicao']],
+  ['ano_informado', ['de qual ano']],
+  ['responsavel', ['responsavel por estar respondendo']],
+  ['gestao', ['responsavel pela organizacao']],
+  ['uso_no_mes', ['foi utilizado durante o mes']],
+  ['estudantes_texto', ['numero aproximado de estudantes']],
+  ['formas_uso', ['formas de utilizacao']],
+  ['temas', ['temas ou categorias']],
+  ['emprestimos_faixa', ['emprestimo de livros para os estudantes']],
+  ['emprestimos_exato', ['numero exato de emprestimos']],
+  ['emprestimos_prof', ['emprestimo de livros para professores']],
+  ['emprestimos_prof_titulos', ['quantos e quais titulos']],
+  ['atividades_faixa', ['quantas atividades pedagogicas']],
+  ['atividades_realizadas', ['principais atividades realizadas']],
+  ['livros_procurados', ['livros ou titulos mais procurados']],
+  ['resultados', ['principais resultados']],
 ]
 /** Campos que vêm do formulário (o conteúdo original da resposta). */
 export const CAMPOS_ORIGINAIS = PERGUNTAS.map(([campo]) => campo)
@@ -78,7 +96,9 @@ export function respostaDoFormulario(linha: unknown[], mapa: Record<string, numb
   if (r.carimbo instanceof Date && isNaN(r.carimbo.getTime())) r.carimbo = ''
   const quando = r.carimbo instanceof Date ? formatarData(r.carimbo, 'yyyyMMddHHmmss') : 'SEMDATA' + numeroLinha
   r.resposta_id = 'F-' + quando + '-' + hashCurto(String(r.email_respondente).toLowerCase() + '|' + chaveEscola(r.escola_informada)).slice(0, 4)
-  r.hash_origem = hashCurto(linha.map(v => (v instanceof Date ? v.getTime() : String(v))).join('␟'))
+  // Carimbo do conteúdo guardado (não da linha bruta): se o mapeamento passar a ler uma pergunta nova,
+  // reenviar a mesma resposta atualiza a linha em vez de dar "igual".
+  r.hash_origem = hashCurto(PERGUNTAS.map(([c]) => (r[c] instanceof Date ? r[c].getTime() : String(r[c]))).join('␟'))
   return r
 }
 
@@ -126,8 +146,16 @@ export function montarCadastro(escolas: Registro[], projetos: Registro[], vincul
 // Resposta → campos derivados (vínculo, mês, números, situação)
 export function identificarVinculo(r: Registro, cad: Cadastro) {
   const escola = cad.escolaPorChave[chaveEscola(r.escola_informada)]
-  const projeto = cad.projetoPorChave[chaveTexto(r.projeto_informado)]
+  let projeto = cad.projetoPorChave[chaveTexto(r.projeto_informado)]
   if (!escola) return { vinculo: '', motivo: `escola não identificada: "${String(r.escola_informada).trim()}"` }
+  if (!projeto) {
+    // O formulário novo traz só o nome geral ("Cantos de Leitura"); vale se a escola tiver um único projeto com esse começo
+    const k = chaveTexto(r.projeto_informado)
+    const daEscola = k ? Object.values(cad.vinculoPorId).filter(v => v.escola_id === escola.escola_id)
+      .map(v => cad.projetoPorId[v.projeto_id]).filter(p => p && (chaveTexto(p.nome) + ' ').startsWith(k + ' ')) : []
+    if (daEscola.length > 1) return { vinculo: '', motivo: `projeto "${String(r.projeto_informado).trim()}" combina com mais de um vínculo da escola (${daEscola.map(p => p.nome).join(', ')})` }
+    projeto = daEscola[0]
+  }
   if (!projeto) return { vinculo: '', motivo: `projeto não reconhecido: "${String(r.projeto_informado).trim()}"` }
   const v = cad.vinculoPorPar[escola.escola_id + '|' + projeto.projeto_id]
   if (!v) return { vinculo: '', motivo: `${escola.escola_id} não tem vínculo com ${projeto.projeto_id}` }
@@ -153,7 +181,10 @@ export function derivarResposta(r: Registro, cad: Cadastro): Registro {
   d.vinculo_id = manual && cad.vinculoPorId[manual] ? manual : id.vinculo
   if (!d.vinculo_id && id.motivo) motivos.push(id.motivo)
 
-  d.mes_auto = mesReferencia(r.mes_informado, r.carimbo instanceof Date ? r.carimbo : null)
+  // formulário novo: o ano vem numa pergunta separada ("De qual ano?") e vale mais que a data do envio
+  const anoInformado = String(r.ano_informado ?? '').match(/\b(20\d{2})\b/)?.[1]
+  const mesTexto = anoInformado && !/\b20\d{2}\b/.test(String(r.mes_informado)) ? `${r.mes_informado} ${anoInformado}` : r.mes_informado
+  d.mes_auto = mesReferencia(mesTexto, r.carimbo instanceof Date ? r.carimbo : null)
   const mesManual = String(r.mes_manual || '').trim()
   d.mes = ehMesIso(mesManual) ? mesManual : d.mes_auto
   if (mesManual && !ehMesIso(mesManual)) motivos.push('mês manual inválido (use AAAA-MM): ' + mesManual)
@@ -161,8 +192,21 @@ export function derivarResposta(r: Registro, cad: Cadastro): Registro {
   else if (r.carimbo instanceof Date && d.mes > formatarData(r.carimbo, 'yyyy-MM')) motivos.push('mês de referência posterior ao envio')
 
   const vis = numeroComCorrecao(r.visitas_texto, r.visitas_corrigidas, PADROES.visitas)
-  const emp = numeroComCorrecao(r.emprestimos_texto, r.emprestimos_corrigidos, PADROES.emprestimos)
-  const eve = numeroComCorrecao(r.atividades_texto, r.eventos_corrigidos, PADROES.eventos)
+  let emp = numeroComCorrecao(r.emprestimos_texto, r.emprestimos_corrigidos, PADROES.emprestimos)
+  let eve = numeroComCorrecao(r.atividades_texto, r.eventos_corrigidos, PADROES.eventos)
+  const est = numeroComCorrecao(r.estudantes_texto, r.estudantes_corrigidos, PADROES.estudantes)
+
+  // Formulário novo: empréstimos têm faixa + "número exato, se possível"; atividades só têm faixa.
+  // Soma só o que é número; a faixa sozinha fica registrada e não manda a resposta para revisão.
+  d.faixa_emprestimos = faixaDeEmprestimos(r.emprestimos_faixa)
+  d.faixa_atividades = faixaDeAtividades(r.atividades_faixa)
+  if (emp.estado === 'vazio' && (r.emprestimos_exato || r.emprestimos_faixa)) {
+    const exato = lerNumero(r.emprestimos_exato, PADROES.emprestimos)
+    emp = exato.estado === 'informado' ? exato : d.faixa_emprestimos === 'Não houve' ? { valor: 0, estado: 'informado' } : { valor: '', estado: 'vazio' }
+  }
+  if (eve.estado === 'vazio' && d.faixa_atividades === 'Nenhuma') eve = { valor: 0, estado: 'informado' }
+  d.total_estudantes = est.valor; d.estudantes_estado = est.estado
+
   d.total_visitas = vis.valor; d.visitas_estado = vis.estado
   d.total_emprestimos = emp.valor; d.emprestimos_estado = emp.estado
   d.total_eventos = eve.valor; d.eventos_estado = eve.estado
@@ -175,6 +219,7 @@ export function derivarResposta(r: Registro, cad: Cadastro): Registro {
   if (vis.estado === 'não lido') motivos.push('visitas: número não encontrado no texto')
   if (emp.estado === 'não lido') motivos.push('empréstimos: número não encontrado no texto')
   if (eve.estado === 'não lido') motivos.push('eventos: número não encontrado no texto')
+  if (est.estado === 'não lido') motivos.push('estudantes: número não encontrado no texto')
 
   const decisao = semAcento(r.decisao).toLowerCase().trim()
   if (decisao === 'descartar') {
@@ -283,7 +328,7 @@ export function calcularObrigacoes(ciclos: Registro[], cad: Cadastro, respostas:
 
 /** Indicadores de um ciclo. Números só das respostas que contam como respondidas. */
 export function indicadoresCiclo(cicloId: string, obrigacoes: Registro[], respostasPorId: Record<string, Registro>) {
-  const ind: Registro = { esperadas: 0, respondidas: 0, em_revisao: 0, pendentes: 0, dispensadas: 0, visitas: 0, emprestimos: 0, eventos: 0, respostas_com_visitas: 0 }
+  const ind: Registro = { esperadas: 0, respondidas: 0, em_revisao: 0, pendentes: 0, dispensadas: 0, visitas: 0, emprestimos: 0, eventos: 0, respostas_com_visitas: 0, estudantes: 0, respostas_com_estudantes: 0 }
   for (const o of obrigacoes) {
     if (o.ciclo_id !== cicloId || o.situacao === SITUACAO_OBRIGACAO.FORA) continue
     if (o.situacao === SITUACAO_OBRIGACAO.DISPENSADA) { ind.dispensadas++; continue }
@@ -297,6 +342,7 @@ export function indicadoresCiclo(cicloId: string, obrigacoes: Registro[], respos
     if (typeof r.total_visitas === 'number') { ind.visitas += r.total_visitas; ind.respostas_com_visitas++ }
     if (typeof r.total_emprestimos === 'number') ind.emprestimos += r.total_emprestimos
     if (typeof r.total_eventos === 'number') ind.eventos += r.total_eventos
+    if (typeof r.total_estudantes === 'number') { ind.estudantes += r.total_estudantes; ind.respostas_com_estudantes++ }
   }
   ind.taxa_resposta = ind.esperadas ? Math.round(10000 * ind.respondidas / ind.esperadas) / 10000 : ''
   return ind
@@ -312,12 +358,15 @@ export function novosFechamentos(ciclos: Registro[], indicadoresPorCiclo: Record
   for (const c of ciclos) {
     if (!/encerrad/i.test(semAcento(c.situacao)) || !indicadoresPorCiclo[c.ciclo_id]) continue
     const ind = indicadoresPorCiclo[c.ciclo_id]
-    const assinatura = hashCurto(CAMPOS_FECHAMENTO.map(k => ind[k]).join('|'))
+    // estudantes (formulário novo) só entra na assinatura quando existe: os ciclos já encerrados
+    // não ganham versão nova só porque o campo passou a existir
+    const assinatura = hashCurto(CAMPOS_FECHAMENTO.map(k => ind[k]).join('|') + (ind.estudantes ? '|estudantes:' + ind.estudantes : ''))
     const ant = ultima[c.ciclo_id]
     if (ant && ant.assinatura === assinatura) continue
     const versao = ant ? +ant.versao + 1 : 1
     const f: Registro = { fechamento_id: c.ciclo_id + '-v' + versao, ciclo_id: c.ciclo_id, versao, registrado_em: agora, assinatura }
     for (const k of CAMPOS_FECHAMENTO) f[k] = ind[k]
+    f.estudantes = ind.estudantes ?? 0
     novos.push(f)
     ultima[c.ciclo_id] = f
   }

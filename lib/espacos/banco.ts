@@ -39,6 +39,7 @@ export const linhasFechamento = (novos: Registro[]) =>
     ciclo_id: f.ciclo_id, versao: f.versao, registrado_em: (f.registrado_em as Date).toISOString(), assinatura: f.assinatura,
     esperadas: f.esperadas, respondidas: f.respondidas, em_revisao: f.em_revisao, pendentes: f.pendentes, dispensadas: f.dispensadas,
     taxa_resposta: f.taxa_resposta === '' ? null : f.taxa_resposta, visitas: f.visitas, emprestimos: f.emprestimos, eventos: f.eventos,
+    estudantes: f.estudantes ?? 0,
   }))
 
 /** Lê tudo do módulo com o cliente da Equipe, recalcula e registra versões novas de fechamento. */

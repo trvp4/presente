@@ -6,7 +6,7 @@ import { Revisar } from '../Acoes'
 
 export const metadata = { title: 'Revisão · Espaços de Leitura' }
 
-const TEXTOS = [['visitas_texto', 'Visitas'], ['emprestimos_texto', 'Empréstimos'], ['atividades_texto', 'Atividades']] as const
+const TEXTOS = [['visitas_texto', 'Visitas'], ['estudantes_texto', 'Estudantes'], ['emprestimos_texto', 'Empréstimos'], ['emprestimos_exato', 'Empréstimos (número exato)'], ['atividades_texto', 'Atividades']] as const
 
 // Respostas que as regras não fecharam sozinhas. A Equipe confirma; nada muda sozinho.
 export default async function Revisao() {
@@ -32,6 +32,7 @@ export default async function Revisao() {
                     <span className="hint">
                       {d?.projeto ?? String(r.projeto_informado)} · {r.mes ? rotuloMes(r.mes) : 'mês não reconhecido'}
                       {r.carimbo instanceof Date && ` · enviada em ${r.carimbo.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`}
+                      {r.responsavel && ` · respondida por ${String(r.responsavel)}`}
                     </span>
                   </div>
                   <span className="st st-warn">Em revisão</span>
@@ -45,7 +46,7 @@ export default async function Revisao() {
                   id={r.resposta_id}
                   precisaVinculo={!r.vinculo_id}
                   precisaMes={!r.mes}
-                  naoLidos={{ visitas: r.visitas_estado === 'não lido', emprestimos: r.emprestimos_estado === 'não lido', eventos: r.eventos_estado === 'não lido' }}
+                  naoLidos={{ visitas: r.visitas_estado === 'não lido', emprestimos: r.emprestimos_estado === 'não lido', eventos: r.eventos_estado === 'não lido', estudantes: r.estudantes_estado === 'não lido' }}
                   vinculos={vinculos}
                 />
               </article>
