@@ -16,15 +16,17 @@ export const SITUACAO_OBRIGACAO = { RESPONDIDA: 'respondida', REVISAO: 'em revis
 const PERGUNTAS: [string, string[]][] = [
   ['carimbo', ['carimbo de data', 'timestamp']],
   ['email_respondente', ['endereco de e-mail', 'e-mail', 'email']],
-  ['projeto_informado', ['projeto recebido']],
-  ['escola_informada', ['instituicao recebeu', 'qual a instituicao']],
+  // os segundos trechos são do formulário reformulado (nov/2026); os primeiros, do original
+  ['projeto_informado', ['projeto recebido', 'qual projeto foi entregue']],
+  ['escola_informada', ['instituicao recebeu', 'qual a instituicao', 'nome da instituicao']],
   ['mes_informado', ['em que mes', 'mes de referencia']],
   ['atores', ['atores envolvidos']],
   ['rede', ['rede de atores']],
   ['potenciais', ['principais potenciais']],
   ['desafios', ['principais desafios']],
   ['faixa_uso_texto', ['percentual de alunos']],
-  ['visitas_texto', ['utilizacao do espaco', 'total de visitas']],
+  // "sobre a utilizacao": só "utilizacao do espaco" casava com "formas de utilização do Espaço" do formulário novo
+  ['visitas_texto', ['sobre a utilizacao do espaco', 'total de visitas']],
   ['emprestimos_texto', ['emprestimo de livros']],
   ['atividades_texto', ['de acordo com as atividades', 'total de eventos']],
   ['cronograma', ['cronograma mensal']],

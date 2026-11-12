@@ -33,6 +33,30 @@ export const TITULOS_FORM = [
   'Anexos, documentos, fotos ou vídeos sobre as atividades no espaço',
 ]
 
+// Enunciados do formulário reformulado (em uso em novembro/2026), na ordem em que aparecem.
+// "beneciada" está assim no formulário real.
+export const TITULOS_FORM_NOV2026 = [
+  'Carimbo de data/hora', 'Endereço de e-mail',
+  'Qual projeto foi entregue? ', 'Qual o ano de edição?', 'Qual o nome da instituição beneciada?',
+  'Quem é o responsável por estar respondendo o formulário? Indicar nome e cargo ',
+  'Em que mês se refere a resposta do questionário?', 'De qual ano? ',
+  'O espaço de leitura tem um responsável pela organização? Comente sobre como está sendo realizada a gestão do espaço neste mês',
+  'Qual o cronograma mensal/semanal de atividades no espaço? ',
+  '  O Espaço de Leitura foi utilizado durante o mês de referência?  ',
+  '  Quais turmas utilizaram o Espaço de Leitura durante o mês?  ',
+  '  Qual foi o número aproximado de estudantes que utilizaram o Espaço de Leitura durante o mês?  Considerar o total de estudantes que passaram pelo espaço, mesmo que tenham utilizado mais de uma vez.    ',
+  '  Quais foram as principais formas de utilização do Espaço de Leitura?  ',
+  '  Quais temas ou categorias de livros foram mais procurados pelos estudantes no mês?   ex: literatura infantil, literatura brasileira, meio ambiente, histórias em quadrinhos, diversidade, socioemocional etc.  ',
+  '  Houve empréstimo de livros para os estudantes?  ',
+  '  Se possível, informar o número exato de empréstimos:  ',
+  '  Houve empréstimo de livros para professores/educadores?  ',
+  '  Se sim, quantos e quais títulos?  ',
+  '  Quantas atividades pedagógicas foram realizadas no Espaço de Leitura durante o mês?  ',
+  '  Quais foram as principais atividades realizadas?   Ex.: roda de leitura, contação de histórias, produção textual, pesquisa, oficinas etc.  ',
+  '  Quais foram os livros ou títulos mais procurados pelos estudantes durante o mês?   Se possível, informar até 5 títulos.  ',
+  'Quais foram os principais resultados, destaques ou dificuldades observados durante esse mês de utilização do espaço?',
+]
+
 export const ESCOLAS = ['Jardim das Letras', 'EMEF Monteiro Lobato', 'E.M. Cecília Meireles', 'EE Cora Coralina',
   'Escola Municipal Ruth Rocha', 'EMEI Ziraldo', 'CEI Ana Maria Machado', 'EMEF Pedro Bandeira']
 
