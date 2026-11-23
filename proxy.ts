@@ -45,5 +45,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!p/|api/saude|api/espacos/formulario|api/avaliacao/formulario|_next/static|_next/image|favicon.ico|icon.svg).*)'],
+  matcher: ['/((?!p/|api/saude|api/espacos/formulario|api/espacos/planilha|api/avaliacao/formulario|_next/static|_next/image|favicon.ico|icon.svg).*)'],
 }

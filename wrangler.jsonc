@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "presente",
-	// worker gerado pelo OpenNext + tarefa diária (custom-worker.ts)
+	// worker gerado pelo OpenNext + tarefa de hora em hora (custom-worker.ts)
 	"main": "custom-worker.ts",
 	"compatibility_date": "2026-09-20",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
