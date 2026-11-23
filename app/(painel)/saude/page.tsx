@@ -72,7 +72,7 @@ export default async function Saude({ searchParams }: { searchParams: Promise<{ 
         : 'Nenhuma conferência ainda: clique em "Conferir agora" ou espere a próxima hora cheia.')}
 
       <div className="sd-kpis">
-        <div className="sd-kpi"><span>No ar (30 dias)</span><b>{noAr === null ? '—' : `${(noAr * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}`}<small>%</small></b><em>{rodadas.length} conferências · meta 99,5%</em></div>
+        <div className="sd-kpi"><span>No ar (30 dias)</span><b>{noAr === null ? '—' : `${(noAr * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}`}<small>%</small></b><em>{rodadas.length} {rodadas.length === 1 ? 'conferência' : 'conferências'} · meta 99,5%</em></div>
         <div className="sd-kpi"><span>Tempo de resposta</span><b>{atual?.ms_banco ?? '—'}<small>ms</small></b><em>banco de dados, agora</em></div>
         <div className={`sd-kpi${problemas ? ' atencao' : ''}`}><span>Verificações com problema</span><b>{atual ? problemas : '—'}</b><em>de {atual?.resultado.length ?? 0} na última conferência</em></div>
         <div className="sd-kpi"><span>Achados abertos</span><b>{abertos.length}</b><em>{abertos.filter(a => a.gravidade === 'P1').length} urgentes (P1)</em></div>
