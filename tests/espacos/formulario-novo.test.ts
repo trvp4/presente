@@ -145,6 +145,16 @@ describe('Formulário novo · resposta no ciclo', () => {
     expect(r.motivos).toMatch(/projeto "Cantos de Leitura" combina com mais de um vínculo da escola/)
   })
 
+  it('projeto com o nome geral cadastrado, mas a escola está numa edição dele: vale a edição da escola', () => {
+    const e = cenarioBase()
+    e.projetos.push({ projeto_id: 'PG', nome: 'Biblioteca Futuro', nomes_no_formulario: '', ativo: 'sim' })
+    e.projetos.push({ projeto_id: 'P40', nome: 'Biblioteca Futuro 4.0', nomes_no_formulario: '', ativo: 'sim' })
+    e.vinculos.push({ vinculo_id: 'V40', escola_id: 'E8', projeto_id: 'P40', patrocinador: 'Patrocinador Y', inicio: '2026-01', fim: '', acompanhar: 'sim' })
+    enviarNovo(e, { quando: '2026-10-30T09:00:00-03:00', escola: 'EMEF Pedro Bandeira', mes: 'Outubro', projeto: 'Biblioteca Futuro' })
+    sincronizar(e)
+    expect(resposta(e, 'EMEF Pedro Bandeira').vinculo_id).toBe('V40')
+  })
+
   it('o ano de edição desempata a escola que está no mesmo projeto em dois anos', () => {
     const e = cenarioBase()
     e.projetos.push({ projeto_id: 'P26', nome: 'Cantos de Leitura - 2026', nomes_no_formulario: '', ativo: 'sim' })

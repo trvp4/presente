@@ -151,7 +151,8 @@ export function identificarVinculo(r: Registro, cad: Cadastro) {
   const ano = String(r.ano_edicao ?? '').match(/\b20\d{2}\b/)?.[0]
   if (!projeto && ano) projeto = cad.projetoPorChave[chaveTexto(`${r.projeto_informado} ${ano}`)]
   if (!escola) return { vinculo: '', motivo: `escola não identificada: "${String(r.escola_informada).trim()}"` }
-  if (!projeto) {
+  // sem projeto, ou com um projeto em que a escola não está (ex.: "Biblioteca Futuro" geral, escola no "Biblioteca Futuro 4.0")
+  if (!projeto || !cad.vinculoPorPar[escola.escola_id + '|' + projeto.projeto_id]) {
     // O formulário novo traz só o nome geral ("Cantos de Leitura"); vale se a escola tiver um único projeto com esse começo
     const k = chaveTexto(r.projeto_informado)
     let daEscola = k ? Object.values(cad.vinculoPorId).filter(v => v.escola_id === escola.escola_id)
@@ -159,7 +160,7 @@ export function identificarVinculo(r: Registro, cad: Cadastro) {
     // mesmo projeto em dois anos: o ano de edição desempata
     if (daEscola.length > 1 && ano) { const doAno = daEscola.filter(p => new RegExp(String.raw`\b${ano}\b`).test(String(p.nome))); if (doAno.length) daEscola = doAno }
     if (daEscola.length > 1) return { vinculo: '', motivo: `projeto "${String(r.projeto_informado).trim()}" combina com mais de um vínculo da escola (${daEscola.map(p => p.nome).join(', ')})` }
-    projeto = daEscola[0]
+    projeto = daEscola[0] ?? projeto
   }
   if (!projeto) return { vinculo: '', motivo: `projeto não reconhecido: "${String(r.projeto_informado).trim()}"` }
   const v = cad.vinculoPorPar[escola.escola_id + '|' + projeto.projeto_id]
