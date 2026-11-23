@@ -9,7 +9,7 @@ import { signOut } from '../login/actions'
 // Cada módulo tem o próprio menu (ADR 0008): Central → Presente (rosa) ou Espaços de Leitura (lilás).
 export default function RailNav({ email, name }: { email: string; name: string | null }) {
   const path = usePathname()
-  const mod = path === '/' ? 'central' : path.startsWith('/espacos') ? 'espacos' : 'presente'
+  const mod = path === '/' || path.startsWith('/saude') ? 'central' : path.startsWith('/espacos') ? 'espacos' : 'presente'
   const item = (href: string, icone: NomeIcone, dica: string, atual: boolean) => (
     <Link className="rail-btn" href={href} aria-current={atual ? 'page' : undefined} aria-label={dica}>
       <Icone nome={icone} /><span className="tip">{dica}</span>
@@ -26,10 +26,11 @@ export default function RailNav({ email, name }: { email: string; name: string |
       <Logo />
       {mod === 'central' && (
         <>
-          {item('/', 'central', 'Central', true)}
+          {item('/', 'central', 'Central', path === '/')}
           <div className="sep" />
           {item('/listas', 'listas', 'Abrir o Presente', false)}
           {item('/espacos', 'livro', 'Abrir o Espaços de Leitura', false)}
+          {item('/saude', 'saude', 'Saúde do sistema', path.startsWith('/saude'))}
         </>
       )}
       {mod === 'presente' && (

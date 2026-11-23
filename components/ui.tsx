@@ -87,6 +87,7 @@ const ICON = {
   revisao: <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M13 7l4 4" /></>,
   escolas: <><path d="M3 10l9-6 9 6" /><path d="M5 10v9h14v-9" /><path d="M10 19v-5h4v5" /></>,
   relatorios: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
+  saude: <path d="M3 12h4l3-8 4 16 3-8h4" />,
 }
 export type NomeIcone = keyof typeof ICON
 export function Icone({ nome, size = 20 }: { nome: NomeIcone; size?: number }) {

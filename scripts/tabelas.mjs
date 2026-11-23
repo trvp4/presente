@@ -6,4 +6,5 @@ export const TABELAS = [
   'av_respostas',                                                                                  // 0005
   'plano_capacitacoes',                                                                            // 0008
   'registro_acesso',                                                                               // 0010
+  'saude_rodadas', 'achados', 'saude_eventos',                                                    // 0012
 ]

@@ -23,5 +23,11 @@ export default {
       method: 'POST', headers: { Authorization: `Bearer ${env.FORMS_SECRET}` },
     }), env, ctx)
     console.log(`planilha do Espaços de Leitura: HTTP ${planilha.status} ${await planilha.text()}`)
+
+    // Saúde do sistema: confere tudo, grava o histórico e abre ou resolve os achados (app/api/saude/coletar)
+    const saude = await handler.fetch(new Request('https://presente.presente.workers.dev/api/saude/coletar', {
+      method: 'POST', headers: { Authorization: `Bearer ${env.FORMS_SECRET}` },
+    }), env, ctx)
+    console.log(`saúde do sistema: HTTP ${saude.status} ${await saude.text()}`)
   },
 }
