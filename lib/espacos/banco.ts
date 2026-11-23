@@ -57,7 +57,10 @@ export async function carregarEspacos(supabase: SupabaseClient, agora = new Date
   const estado = paraRegras({ schools, projects, vinculos, ciclos, respostas, dispensas, contatos, fechamentos })
   const r = processar(estado, agora)
   // Ciclo encerrado cujo resultado mudou ganha versão nova; unique(ciclo_id, versao) evita duplicar se duas telas abrirem juntas
-  if (r.novosFechamentos.length) await supabase.from('el_fechamentos').insert(linhasFechamento(r.novosFechamentos))
+  if (r.novosFechamentos.length) {
+    const { error } = await supabase.from('el_fechamentos').insert(linhasFechamento(r.novosFechamentos))
+    if (error && error.code !== '23505') console.error(`fechamento do mês não gravado: ${error.message}`) // 23505: outra tela gravou junto
+  }
 
   const escolaPorId = r.cadastro.escolaPorId, projetoPorId = r.cadastro.projetoPorId
   const descrever = (vid: string) => {

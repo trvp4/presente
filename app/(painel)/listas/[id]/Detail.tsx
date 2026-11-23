@@ -51,16 +51,17 @@ export default function Detail({ training: t, initial, origin, projects }: { tra
   const toggleOpen = () =>
     start(async () => {
       const acao = status === 'live' ? 'encerrar' : 'reabrir'
-      await setTrainingState(t.id, acao)
-      toast(acao === 'reabrir' ? 'Lista aberta por 48 horas' : 'Lista encerrada')
+      const r = await setTrainingState(t.id, acao)
+      toast(r.error ?? (acao === 'reabrir' ? 'Lista aberta por 48 horas' : 'Lista encerrada'))
     })
 
   const remove = (a: Attendance) => {
     if (confirmRm !== a.id) return setConfirmRm(a.id)
     start(async () => {
-      await removeAttendance(a.id, t.id)
-      setList(prev => prev.filter(x => x.id !== a.id))
+      const r = await removeAttendance(a.id, t.id)
       setConfirmRm(null)
+      if (r.error) return toast(r.error)
+      setList(prev => prev.filter(x => x.id !== a.id))
       toast('Presença removida')
     })
   }
@@ -161,7 +162,7 @@ export default function Detail({ training: t, initial, origin, projects }: { tra
             </div>
             {(t.state !== 'auto' || t.open_until) && (
               <button className="linkish" style={{ alignSelf: 'flex-start' }} disabled={pending}
-                onClick={() => start(async () => { await setTrainingState(t.id, 'horario'); toast('A lista volta a abrir e fechar pelo horário') })}>
+                onClick={() => start(async () => { const r = await setTrainingState(t.id, 'horario'); toast(r.error ?? 'A lista volta a abrir e fechar pelo horário') })}>
                 Voltar a abrir e fechar pelo horário
               </button>
             )}
@@ -176,7 +177,7 @@ export default function Detail({ training: t, initial, origin, projects }: { tra
             </dl>
             {t.pdf_sent_at && (
               <button className="linkish" style={{ alignSelf: 'flex-start' }} disabled={pending}
-                onClick={() => start(async () => { await setPdfSent(t.id, false); toast('Marcado como não enviado') })}>
+                onClick={() => start(async () => { const r = await setPdfSent(t.id, false); toast(r.error ?? 'Marcado como não enviado') })}>
                 Desmarcar lista enviada
               </button>
             )}
@@ -242,7 +243,7 @@ function PdfFx({ t, list, onClose }: { t: T; list: Attendance[]; onClose: () => 
             <a className="btn btn-pink" href={`/api/listas/${t.id}/docx`} download onClick={() => toast('Baixando a lista em Word (.docx)')}>Baixar lista em Word (.docx)</a>
             {!sent && (
               <button className="btn btn-ghost" disabled={pending}
-                onClick={() => start(async () => { await setPdfSent(t.id, true); toast('Lista marcada como enviada'); onClose() })}>
+                onClick={() => start(async () => { const r = await setPdfSent(t.id, true); toast(r.error ?? 'Lista marcada como enviada'); if (!r.error) onClose() })}>
                 Marcar como enviado
               </button>
             )}

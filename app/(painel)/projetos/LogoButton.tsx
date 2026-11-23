@@ -13,7 +13,7 @@ export default function LogoButton({ id, hasLogo }: { id: string; hasLogo: boole
     if (!f) return
     try {
       const logo = await fileToLogo(f)
-      start(async () => { await setProjectLogo(id, logo); toast('Logo atualizado') })
+      start(async () => { const r = await setProjectLogo(id, logo); toast(r.error ?? 'Logo atualizado') })
     } catch (err) { toast((err as Error).message) }
   }
   return (

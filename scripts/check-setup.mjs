@@ -1,6 +1,7 @@
 // Confere se o Supabase está configurado para o Presente.
 // Uso: npm run check   (lê as chaves do .env.local; não mostra nenhuma chave na tela)
 import { createClient } from '@supabase/supabase-js'
+import { TABELAS } from './tabelas.mjs'
 import { loadEnv } from './env.mjs'
 
 const env = loadEnv()
@@ -25,14 +26,14 @@ if (failed) { console.log('\nPreencha o .env.local e rode de novo.\n'); process.
 const admin = createClient(url, secret, { auth: { persistSession: false } })
 
 // 2. tabelas
-const tables = ['staff', 'projects', 'trainings', 'attendances']
+const tables = TABELAS
 let tablesOk = true
 for (const t of tables) {
   const { error } = await admin.from(t).select('*', { count: 'exact', head: true })
   if (error) { tablesOk = false; bad(`Tabela ${t}: ${error.message}`) }
 }
-if (tablesOk) ok('Tabelas criadas (staff, projects, trainings, attendances)')
-else console.log('      → rode supabase/migrations/0001_init.sql no SQL Editor')
+if (tablesOk) ok(`Tabelas criadas (${tables.length})`)
+else console.log('      → rode no SQL Editor as migrações de supabase/migrations que faltam')
 
 // 3. cadastro público desligado
 try {

@@ -62,17 +62,21 @@ export async function deleteProject(id: string): Promise<ProjectState> {
 }
 
 // Arquivado: some da criação de listas, mas o histórico continua.
-export async function setProjectArchived(id: string, archived: boolean) {
+export async function setProjectArchived(id: string, archived: boolean): Promise<ProjectState> {
   const supabase = await staffOrThrow()
-  await supabase.from('projects').update({ archived }).eq('id', id)
+  const { error } = await supabase.from('projects').update({ archived }).eq('id', id)
+  if (error) return { error: 'Não foi possível salvar. Tente de novo.' }
   revalidarProjetos()
+  return { ok: true }
 }
 
-export async function setProjectLogo(id: string, logo: string | null) {
+export async function setProjectLogo(id: string, logo: string | null): Promise<ProjectState> {
   const supabase = await staffOrThrow()
-  if (logo && (!LOGO_RE.test(logo) || logo.length > 600_000)) throw new Error('Imagem inválida.')
-  await supabase.from('projects').update({ logo }).eq('id', id)
+  if (logo && (!LOGO_RE.test(logo) || logo.length > 600_000)) return { error: 'Imagem inválida.' }
+  const { error } = await supabase.from('projects').update({ logo }).eq('id', id)
+  if (error) return { error: 'Não foi possível trocar o logo. Tente de novo.' }
   revalidatePath('/projetos')
+  return { ok: true }
 }
 
 // ---------------- capacitações ----------------
@@ -125,7 +129,10 @@ export async function createTraining(_prev: TrainingState, form: FormData): Prom
     if (!error && data) {
       // lista criada a partir do plano de capacitações: fica ligada ao item (se ele ainda não tiver lista)
       const plano = String(form.get('plano_id') || '')
-      if (plano) await supabase.from('plano_capacitacoes').update({ training_id: data.id }).eq('id', plano).is('training_id', null)
+      if (plano) {
+        const { error: e } = await supabase.from('plano_capacitacoes').update({ training_id: data.id }).eq('id', plano).is('training_id', null)
+        if (e) console.error(`lista ${data.id} criada, mas não ficou ligada ao item ${plano} do plano: ${e.message}`)
+      }
       revalidatePath('/', 'layout')
       return { id: data.id, code: data.code }
     }
@@ -148,40 +155,48 @@ export async function updateTraining(id: string, dados: Record<string, unknown>)
 }
 
 // Chave "Aceitando presenças": reabrir (por 48 h, depois fecha sozinha), encerrar ou voltar a seguir o horário
-export async function setTrainingState(id: string, acao: 'reabrir' | 'encerrar' | 'horario') {
+export type AcaoState = { error?: string }
+
+export async function setTrainingState(id: string, acao: 'reabrir' | 'encerrar' | 'horario'): Promise<AcaoState> {
   const supabase = await staffOrThrow()
   const mudanca = { reabrir, encerrar, horario: peloHorario }[acao]
-  if (!mudanca) throw new Error('Ação inválida.')
-  await supabase.from('trainings').update(mudanca()).eq('id', id)
+  if (!mudanca) return { error: 'Ação inválida.' }
+  const { error } = await supabase.from('trainings').update(mudanca()).eq('id', id)
+  if (error) return { error: 'Não foi possível mudar a lista. Tente de novo.' }
   revalidatePath('/', 'layout')
   revalidatePath(`/listas/${id}`)
+  return {}
 }
 
-export async function setPdfSent(id: string, sent: boolean) {
+export async function setPdfSent(id: string, sent: boolean): Promise<AcaoState> {
   const supabase = await staffOrThrow()
-  await supabase.from('trainings').update({ pdf_sent_at: sent ? new Date().toISOString() : null }).eq('id', id)
+  const { error } = await supabase.from('trainings').update({ pdf_sent_at: sent ? new Date().toISOString() : null }).eq('id', id)
+  if (error) return { error: 'Não foi possível salvar. Tente de novo.' }
   revalidatePath('/', 'layout')
   revalidatePath(`/listas/${id}`)
+  return {}
 }
 
 export async function deleteTraining(id: string) {
   const { supabase, isStaff, email } = await getStaff()
   if (!isStaff) throw new Error('Acesso não autorizado.')
   const { data: t } = await supabase.from('trainings').select('id, title, attendances(count)').eq('id', id).maybeSingle()
-  if (t) await registrar(supabase, email, 'exclusao_lista', t, `${(t.attendances as { count: number }[])?.[0]?.count ?? 0} assinatura(s) apagadas junto`)
   const { error } = await supabase.from('trainings').delete().eq('id', id)
   if (error) throw new Error('Não foi possível excluir a lista.')
+  if (t) await registrar(supabase, email, 'exclusao_lista', t, `${(t.attendances as { count: number }[])?.[0]?.count ?? 0} assinatura(s) apagadas junto`)
   revalidatePath('/', 'layout')
   redirect('/listas')
 }
 
-export async function removeAttendance(id: string, trainingId: string) {
+export async function removeAttendance(id: string, trainingId: string): Promise<AcaoState> {
   const { supabase, isStaff, email } = await getStaff()
   if (!isStaff) throw new Error('Acesso não autorizado.')
   const { data: a } = await supabase.from('attendances').select('full_name, training:trainings(id, title)').eq('id', id).maybeSingle()
   const lista = a?.training as unknown as { id: string; title: string } | null
+  const { error } = await supabase.from('attendances').delete().eq('id', id)
+  if (error) return { error: 'Não foi possível remover a presença. Tente de novo.' }
   if (a && lista) await registrar(supabase, email, 'remocao_assinatura', lista, `assinatura de ${a.full_name}`)
-  await supabase.from('attendances').delete().eq('id', id)
   revalidatePath(`/listas/${trainingId}`)
   revalidatePath('/', 'layout')
+  return {}
 }

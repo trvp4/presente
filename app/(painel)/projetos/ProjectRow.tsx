@@ -36,8 +36,8 @@ export default function ProjectRow({ p, listas }: { p: Project; listas: number }
 
   const arquivar = (archived: boolean) =>
     start(async () => {
-      await setProjectArchived(p.id, archived)
-      toast(archived ? 'Projeto arquivado: não aparece mais na criação de listas' : 'Projeto reativado')
+      const r = await setProjectArchived(p.id, archived)
+      toast(r.error ?? (archived ? 'Projeto arquivado: não aparece mais na criação de listas' : 'Projeto reativado'))
     })
 
   if (editando) {
