@@ -105,6 +105,30 @@ export function planoDeAchados(verificacoes: Verificacao[], atuais: AchadoAtual[
   return { abrir, resolver }
 }
 
+// Agente diário (rotina na nuvem): cada correção proposta fica num ramo agente/… do GitHub, nunca no main.
+export const REPOSITORIO = 'trvp4/presente'
+export type RamoDoAgente = { nome: string; mensagem: string }
+
+/** Ramos agente/… → achados "aguarda você" (um por ramo); ramo que sumiu (aceito ou descartado) resolve o achado. */
+export function planoDosRamos(ramos: RamoDoAgente[], atuais: AchadoAtual[]) {
+  const doAgente = ramos.filter(r => r.nome.startsWith('agente/'))
+  const idDe = (nome: string) => `ACH-${nome.replace('/', '-')}`.slice(0, 120)
+  const existentes = new Set(atuais.map(a => a.id))
+  const abrir = doAgente.filter(r => !existentes.has(idDe(r.nome))).map(r => {
+    const [titulo, ...resto] = r.mensagem.split('\n')
+    return {
+      id: idDe(r.nome), estado: 'aguarda_voce' as const, gravidade: 'P2' as Gravidade, categoria: 'Correção do agente',
+      titulo: titulo.trim().slice(0, 200) || r.nome, detalhe: resto.join(' ').replace(/\s+/g, ' ').trim().slice(0, 500),
+      acao: `Revisar a correção e, se estiver certa, pedir para publicar: https://github.com/${REPOSITORIO}/compare/main...${r.nome}`,
+    }
+  })
+  const vivos = new Set(doAgente.map(r => idDe(r.nome)))
+  const resolver = atuais
+    .filter(a => a.origem === 'agente' && a.id.startsWith('ACH-agente-') && (a.estado === 'aberto' || a.estado === 'aguarda_voce') && !vivos.has(a.id))
+    .map(a => a.id)
+  return { abrir, resolver }
+}
+
 type Rodada = { quando: string; resultado: { chave: string; status: string }[] }
 
 /** Números da tela: % de conferências com o banco ok e, por dia (30 dias), o maior número de verificações com problema. */

@@ -4,7 +4,7 @@ import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { carregarEspacos, cicloPadrao } from './espacos/banco'
 import { idDaPlanilha } from './espacos/planilha'
-import { planoDeAchados, verificar, type Dados } from './saude'
+import { planoDeAchados, planoDosRamos, REPOSITORIO, verificar, type AchadoAtual, type Dados, type RamoDoAgente } from './saude'
 
 const ultima = async (admin: SupabaseClient, tabela: string, coluna: string, filtro?: [string, string]) => {
   let q = admin.from(tabela).select(coluna).order(coluna, { ascending: false }).limit(1)
@@ -63,5 +63,40 @@ export async function coletar(admin: SupabaseClient, origem: 'agendada' | 'manua
     const { error: e } = await admin.from('achados').update({ estado: 'resolvido', resolvido_em: quando, resolvido_por: 'verificação automática', atualizado_em: quando }).in('id', resolver)
     if (e) console.error(`saúde: achados não resolvidos: ${e.message}`)
   }
-  return { verificacoes, gravado: !error, abertos: abrir.length, resolvidos: resolver.length }
+  const agente = await sincronizarAgente(admin, atuais ?? [], quando)
+  return { verificacoes, gravado: !error, abertos: abrir.length + agente.abertos, resolvidos: resolver.length + agente.resolvidos }
+}
+
+// Correções do agente diário: ramos agente/… do repositório público no GitHub (sem chave; limite de 60 consultas/h).
+// Se o GitHub não responder, não mexe em nada (não resolve achados por falta de resposta).
+async function sincronizarAgente(admin: SupabaseClient, atuais: AchadoAtual[], quando: string) {
+  const gh = (caminho: string) => fetch(`https://api.github.com/repos/${REPOSITORIO}${caminho}`, {
+    headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'presente-saude' },
+  })
+  try {
+    const r = await gh('/branches?per_page=100')
+    if (!r.ok) throw new Error(`GitHub respondeu ${r.status}`)
+    const nomes = ((await r.json()) as { name: string }[]).map(b => b.name).filter(n => n.startsWith('agente/'))
+    const conhecidos = new Set(atuais.map(a => a.id))
+    const ramos: RamoDoAgente[] = []
+    for (const nome of nomes) {
+      if (conhecidos.has(`ACH-${nome.replace('/', '-')}`.slice(0, 120))) { ramos.push({ nome, mensagem: '' }); continue } // já tem achado: não gasta consulta
+      const c = await gh(`/commits/${encodeURIComponent(nome)}`)
+      const mensagem = c.ok ? ((await c.json()) as { commit: { message: string } }).commit.message : nome
+      ramos.push({ nome, mensagem })
+    }
+    const { abrir, resolver } = planoDosRamos(ramos, atuais)
+    if (abrir.length) {
+      const { error } = await admin.from('achados').upsert(abrir.map(a => ({ ...a, origem: 'agente', verificacao: null, criado_em: quando, atualizado_em: quando })))
+      if (error) console.error(`saúde: correções do agente não registradas: ${error.message}`)
+    }
+    if (resolver.length) {
+      const { error } = await admin.from('achados').update({ estado: 'resolvido', resolvido_em: quando, resolvido_por: 'ramo aceito ou descartado no GitHub', atualizado_em: quando }).in('id', resolver)
+      if (error) console.error(`saúde: correções do agente não resolvidas: ${error.message}`)
+    }
+    return { abertos: abrir.length, resolvidos: resolver.length }
+  } catch (e) {
+    console.error(`saúde: não consegui ler os ramos do agente no GitHub: ${(e as Error).message}`)
+    return { abertos: 0, resolvidos: 0 }
+  }
 }

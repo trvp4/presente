@@ -1,6 +1,6 @@
 // Saúde do sistema: verificações de hora em hora, achados abertos e resolvidos sozinhos, números da tela.
 import { describe, expect, it } from 'vitest'
-import { verificar, planoDeAchados, resumoDasRodadas, type Dados } from '@/lib/saude'
+import { verificar, planoDeAchados, planoDosRamos, resumoDasRodadas, type Dados } from '@/lib/saude'
 
 const agora = new Date('2026-11-23T12:00:00Z') // 09:00 em Brasília
 const lista = (o: Partial<Dados['listas'][number]> = {}) => ({
@@ -86,6 +86,29 @@ describe('Saúde do sistema · achados', () => {
     expect(planoDeAchados(comProblema, [{ id: 'ACH-backup', estado: 'ignorado', origem: 'verificacao', verificacao: 'backup' }]).abrir).toEqual([])
     const doAgente = [{ id: 'ACH-1123-01', estado: 'aguarda_voce', origem: 'agente', verificacao: null }]
     expect(planoDeAchados(verificar(base()), doAgente).resolver).toEqual([])
+  })
+})
+
+describe('Saúde do sistema · correções do agente diário (ramos agente/… no GitHub)', () => {
+  const ramo = { nome: 'agente/2026-11-24-relatorio-sem-patrocinador', mensagem: 'Relatório não abre quando a escola está sem patrocinador\n\nTeste que reproduz e correção de 3 linhas.' }
+
+  it('cada ramo novo do agente vira um achado "aguarda você" com o link para revisar', () => {
+    const { abrir, resolver } = planoDosRamos([ramo, { nome: 'main', mensagem: 'x' }], [])
+    expect(resolver).toEqual([])
+    expect(abrir).toHaveLength(1)
+    expect(abrir[0]).toMatchObject({
+      id: 'ACH-agente-2026-11-24-relatorio-sem-patrocinador', estado: 'aguarda_voce', gravidade: 'P2', categoria: 'Correção do agente',
+      titulo: 'Relatório não abre quando a escola está sem patrocinador', detalhe: 'Teste que reproduz e correção de 3 linhas.',
+    })
+    expect(abrir[0].acao).toContain('https://github.com/trvp4/presente/compare/main...agente/2026-11-24-relatorio-sem-patrocinador')
+  })
+
+  it('não reabre o que já existe e resolve quando o ramo some (aceito ou descartado)', () => {
+    const atual = { id: 'ACH-agente-2026-11-24-relatorio-sem-patrocinador', estado: 'aguarda_voce', origem: 'agente', verificacao: null }
+    expect(planoDosRamos([ramo], [atual]).abrir).toEqual([])
+    expect(planoDosRamos([], [atual]).resolver).toEqual([atual.id])
+    // achados das verificações não são tocados
+    expect(planoDosRamos([], [{ id: 'ACH-backup', estado: 'aberto', origem: 'verificacao', verificacao: 'backup' }]).resolver).toEqual([])
   })
 })
 
