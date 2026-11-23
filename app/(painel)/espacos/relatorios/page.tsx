@@ -13,6 +13,7 @@ const CEL: Record<string, [string, string]> = {
   'respondida': ['resp', 'c-resp'], 'em revisão': ['rev', 'c-rev'], 'pendente': ['pend', 'c-pend'], 'dispensada': ['disp', 'c-disp'], 'não esperada': ['—', ''],
 }
 const MES3 = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+const TITULO_TEMA = { resultados: 'O que as escolas relataram', desafios: 'Desafios e o que melhorar', interesse: 'Interesse dos leitores' }
 
 function mesesAtras(iso: string, n: number) {
   const [a, m] = iso.split('-').map(Number), t = a * 12 + m - 1 - n
@@ -81,8 +82,22 @@ export default async function Relatorios({ searchParams }: { searchParams: Promi
         <div className="es-kpi"><b>{r.acompanhadas}/{r.escolas}</b><span>escolas em acompanhamento</span></div>
         <div className="es-kpi"><b>{s.respondidas}/{s.esperadas}</b><span>respostas esperadas</span></div>
         <div className="es-kpi lilac"><b>{pct(s.taxa)}</b><span>taxa de resposta</span></div>
-        <div className="es-kpi"><b>{s.com_visitas ? num(s.visitas) : '—'}</b><span>{s.com_visitas ? `visitas (${s.com_visitas} de ${s.respostas_validas} informaram)` : 'visitas: sem informação'}</span></div>
+        {s.respostas_novas > 0
+          ? <div className="es-kpi"><b>{s.com_estudantes ? num(s.estudantes) : '—'}</b><span>{s.com_estudantes ? `estudantes atendidos (${s.com_estudantes} de ${s.respostas_novas} informaram)` : 'estudantes: sem informação'}</span></div>
+          : <div className="es-kpi"><b>{s.com_visitas ? num(s.visitas) : '—'}</b><span>{s.com_visitas ? `visitas (${s.com_visitas} de ${s.respostas_validas} informaram)` : 'visitas: sem informação'}</span></div>}
       </div>
+      {s.respostas_novas > 0 && s.respostas_antigas > 0 && (
+        <p className="es-note">No período há respostas dos dois formulários: <b>{num(s.visitas)}</b> visitas no formulário antigo ({s.com_visitas} de {s.respostas_antigas} informaram) e <b>{num(s.estudantes)}</b> estudantes atendidos no novo. Os dois números não se somam.</p>
+      )}
+      {(Object.keys(r.faixas_emprestimos).length > 0 || Object.keys(r.faixas_atividades).length > 0) && (
+        <section>
+          <div className="sec-title"><h2>Uso por faixa</h2><span>quantas escolas marcaram cada opção no formulário novo</span></div>
+          <ul className="es-att">
+            {Object.keys(r.faixas_emprestimos).length > 0 && <li><b>Empréstimos:</b> {Object.entries(r.faixas_emprestimos).map(([k, n]) => `${k} (${n})`).join(' · ')}{s.com_emprestimos ? ` — ${num(s.emprestimos)} livros somando os números exatos informados` : ''}</li>}
+            {Object.keys(r.faixas_atividades).length > 0 && <li><b>Atividades pedagógicas:</b> {Object.entries(r.faixas_atividades).map(([k, n]) => `${k} (${n})`).join(' · ')}</li>}
+          </ul>
+        </section>
+      )}
 
       {r.atencao.length > 0 && (
         <section>
@@ -113,9 +128,9 @@ export default async function Relatorios({ searchParams }: { searchParams: Promi
         ) : <div className="empty">Nenhum mês com acompanhamento no período.</div>}
       </section>
 
-      {(['resultados', 'desafios'] as const).map(tema => (
+      {(['resultados', 'desafios', 'interesse'] as const).filter(tema => tema !== 'interesse' || r.relatos.interesse.length > 0).map(tema => (
         <section key={tema}>
-          <div className="sec-title"><h2>{tema === 'resultados' ? 'O que as escolas relataram' : 'Desafios e o que melhorar'}</h2><span>trechos literais, sem texto gerado por IA</span></div>
+          <div className="sec-title"><h2>{TITULO_TEMA[tema]}</h2><span>trechos literais, sem texto gerado por IA</span></div>
           {r.relatos[tema].length ? (
             <div className="es-stack">
               {r.relatos[tema].map((x, i) => <blockquote key={i} className="es-relato">{x.texto}<footer>{x.escola} · {x.mes} · {x.campo}</footer></blockquote>)}

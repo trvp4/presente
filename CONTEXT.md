@@ -122,6 +122,14 @@ _Avoid_: Tarefa, cobrança
 O que a escola envia pelo Google Forms sobre um mês; o mês de referência vem da resposta, nunca da data de envio.
 _Avoid_: Relatório da escola, formulário (é o meio, não a coisa)
 
+**Formulário novo**:
+O Google Forms reformulado em nov/2026: pergunta Estudantes atendidos (não visitas) e traz empréstimos e atividades por faixa; o ano do mês de referência vem da pergunta "De qual ano?". Respostas antigas e novas convivem e cada número só é cobrado de quem respondeu o formulário que perguntava por ele.
+_Avoid_: Formulário v2, novo modelo
+
+**Estudantes atendidos**:
+Número aproximado de estudantes que usaram o Espaço de Leitura no mês, informado pela escola no Formulário novo. Não se soma com visitas do formulário antigo.
+_Avoid_: Alunos únicos, visitas
+
 **Resposta vigente**:
 A última Resposta mensal de um Vínculo para um mês; as anteriores ficam "substituídas" e guardadas, e só a vigente entra nas somas.
 _Avoid_: Resposta final, versão

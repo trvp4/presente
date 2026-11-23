@@ -34,11 +34,11 @@ describe('Espaços de Leitura · planilha do formulário', () => {
     expect(envios[0].referencia).toBe('planilha linha 2')
     expect(envios[1].valores).toEqual(['2026-10-23T15:00:00.000Z', 'ImpactaLab', '2026', 'EMEI Ziraldo', 'Outubro', '', ''])
 
-    // e segue o mesmo caminho do script: projeto + edição e mês + ano juntos
+    // e segue o mesmo caminho do script: projeto, ano de edição, mês e ano em campos próprios
     const { mapa } = mapearPerguntas(envios[0].titulos)
     const r = respostaDoFormulario(envios[0].valores, mapa, envios[0].referencia)
-    expect(r.projeto_informado).toBe('Cantos de Leitura 2026')
-    expect(r.mes_informado).toBe('Setembro 2026')
+    expect([r.projeto_informado, r.ano_edicao, r.mes_informado, r.ano_informado]).toEqual(['Cantos de Leitura', '2026', 'Setembro', '2026'])
+    expect(r.emprestimos_exato).toBe('42')
   })
 
   it('o mesmo envio pelo script e pela planilha tem o mesmo código de resposta (não duplica)', () => {

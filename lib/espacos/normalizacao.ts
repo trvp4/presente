@@ -80,6 +80,12 @@ export const PADROES = {
     /(\d[\d.]*)\s+atividades?\s+de\s+leitura/,
     /atividades?\s+(\d[\d.]*)\b/,
   ],
+  // formulário reformulado (nov/2026): "número aproximado de estudantes que utilizaram o espaço"
+  estudantes: [
+    /(\d[\d.]*)\s+(?:estudantes|alunos|alunas|criancas)/,
+    /(?:cerca|em\s+torno|por\s+volta)\s+de\s+(\d[\d.]*)/,
+    /(?:aproximadamente|aprox\.?|mais\s+de|quase)\s+(\d[\d.]*)/,
+  ],
   partLeitura: [/atividades\s+de\s+leitura\D{0,20}?(\d{1,5})/],
   partOficinas: [/oficinas?\D{0,30}?(\d{1,5})/],
   partOutros: [/outros\D{0,20}?(\d{1,5})/],
@@ -136,6 +142,26 @@ export function faixaDeUso(texto: unknown) {
   const t = semAcento(texto).toLowerCase()
   return FAIXAS_USO.find(([, re]) => re.test(t))?.[0] ?? ''
 }
+
+// Faixas de múltipla escolha do formulário reformulado (nov/2026)
+const FAIXAS_EMPRESTIMOS: [string, RegExp][] = [
+  ['Não houve', /nao\s+houve/],
+  ['Até 10', /ate\s+10/],
+  ['11 a 30', /11\s+a\s+30/],
+  ['31 a 50', /31\s+a\s+50/],
+  ['Mais de 50', /mais\s+de\s+50/],
+]
+const FAIXAS_ATIVIDADES: [string, RegExp][] = [
+  ['Nenhuma', /nenhuma/],
+  ['1 a 3', /\b1\s+a\s+3\b/],
+  ['4 a 6', /\b4\s+a\s+6\b/],
+  ['7 a 10', /\b7\s+a\s+10\b/],
+  ['Mais de 10', /mais\s+de\s+10/],
+]
+/** "Sim, de 11 a 30 livros" → "11 a 30"; "Não houve empréstimos" → "Não houve". */
+export const faixaDeEmprestimos = (texto: unknown) => FAIXAS_EMPRESTIMOS.find(([, re]) => re.test(semAcento(texto).toLowerCase()))?.[0] ?? ''
+/** "( ) 4 a 6" → "4 a 6"; "( ) Nenhuma" → "Nenhuma". */
+export const faixaDeAtividades = (texto: unknown) => FAIXAS_ATIVIDADES.find(([, re]) => re.test(semAcento(texto).toLowerCase()))?.[0] ?? ''
 
 // Mês de referência
 const NOMES_MES = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']

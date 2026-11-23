@@ -30,21 +30,31 @@ export function listarPatrocinadores(vinculos: Registro[]) {
   })
 }
 
-const CAMPOS_RELATO: [string, string, 'resultados' | 'desafios'][] = [
-  ['resultados_mes', 'Resultados do mês', 'resultados'],
+type Tema = 'resultados' | 'desafios' | 'interesse'
+const CAMPOS_RELATO: [string, string, Tema][] = [
   ['boas_praticas', 'Boas práticas', 'resultados'],
   ['impacto_comunidade', 'Impacto na comunidade', 'resultados'],
   ['alfabetizacao', 'Alfabetização', 'resultados'],
   ['atividade_mais_realizada', 'Atividade mais realizada', 'resultados'],
   ['atividades_texto', 'Atividades', 'resultados'],
+  // formulário reformulado (nov/2026)
+  ['resultados', 'Resultados e dificuldades', 'resultados'],
+  ['atividades_realizadas', 'Atividades realizadas', 'resultados'],
+  ['gestao', 'Gestão do espaço', 'resultados'],
   ['desafios', 'Desafios', 'desafios'],
   ['melhorias', 'O que melhorar', 'desafios'],
+  ['livros_procurados', 'Livros mais procurados', 'interesse'],
+  ['temas', 'Temas mais procurados', 'interesse'],
 ]
 const LIMITE_RELATOS = { porEscola: 2, porTema: 8, caracteres: 420 }
 
-function trechoRelato(texto: unknown) {
+/** Respondida no formulário reformulado (nov/2026), que não pergunta visitas nem percentual de uso. */
+export const doFormularioNovo = (r: Registro) => Boolean(r.estudantes_texto || r.emprestimos_faixa || r.atividades_faixa || r.ano_informado)
+
+/** Trecho literal para o relatório; relatos curtos demais ficam de fora, exceto listas (livros, temas). */
+function trechoRelato(texto: unknown, lista = false) {
   const t = String(texto || '').replace(/\s+/g, ' ').trim()
-  if (t.length < 40 || t.split(' ').length < 6) return ''
+  if (lista ? t.length < 3 : t.length < 40 || t.split(' ').length < 6) return ''
   if (t.length <= LIMITE_RELATOS.caracteres) return t
   const corte = t.slice(0, LIMITE_RELATOS.caracteres)
   return corte.slice(0, corte.lastIndexOf(' ')) + '…'
@@ -87,8 +97,10 @@ export function montarRelatorioPatrocinador(T: Tabelas, patrocinador: string, de
   const validaPor = Object.fromEntries(validas.map(r => [r.vinculo_id + '|' + r.mes, r]))
 
   // Resumo: taxa só nos meses com ciclo (onde se sabe quem precisava responder)
+  const novas = validas.filter(doFormularioNovo)
   const res = { esperadas: 0, respondidas: 0, em_revisao: 0, pendentes: 0, dispensadas: 0, respostas_validas: validas.length,
-    visitas: 0, emprestimos: 0, eventos: 0, com_visitas: 0, com_emprestimos: 0, com_eventos: 0, taxa: null as number | null }
+    respostas_antigas: validas.length - novas.length, respostas_novas: novas.length,
+    visitas: 0, emprestimos: 0, eventos: 0, estudantes: 0, com_visitas: 0, com_emprestimos: 0, com_eventos: 0, com_estudantes: 0, taxa: null as number | null }
   for (const o of Object.values(obrig)) {
     const s = o.situacao
     if (s === SITUACAO_OBRIGACAO.DISPENSADA) { res.dispensadas++; continue }
@@ -98,13 +110,17 @@ export function montarRelatorioPatrocinador(T: Tabelas, patrocinador: string, de
     else res.pendentes++
   }
   res.taxa = res.esperadas ? Math.round(10000 * res.respondidas / res.esperadas) / 10000 : null
-  const faixas: Record<string, number> = {}
+  const faixas: Record<string, number> = {}, faixas_emprestimos: Record<string, number> = {}, faixas_atividades: Record<string, number> = {}
+  const contar = (g: Record<string, number>, k: string) => { g[k] = (g[k] || 0) + 1 }
   for (const r of validas) {
     if (typeof r.total_visitas === 'number') { res.visitas += r.total_visitas; res.com_visitas++ }
     if (typeof r.total_emprestimos === 'number') { res.emprestimos += r.total_emprestimos; res.com_emprestimos++ }
     if (typeof r.total_eventos === 'number') { res.eventos += r.total_eventos; res.com_eventos++ }
-    const f = r.faixa_uso || 'não informado'
-    faixas[f] = (faixas[f] || 0) + 1
+    if (typeof r.total_estudantes === 'number') { res.estudantes += r.total_estudantes; res.com_estudantes++ }
+    if (doFormularioNovo(r)) {
+      if (r.faixa_emprestimos) contar(faixas_emprestimos, r.faixa_emprestimos)
+      if (r.faixa_atividades) contar(faixas_atividades, r.faixa_atividades)
+    } else contar(faixas, r.faixa_uso || 'não informado')
   }
 
   // Grade escola × mês
@@ -123,12 +139,12 @@ export function montarRelatorioPatrocinador(T: Tabelas, patrocinador: string, de
   }).sort((a, b) => a.projeto.localeCompare(b.projeto) || a.escola.localeCompare(b.escola))
 
   // Relatos: trechos literais, mais recentes primeiro, com limite por escola e por tema
-  const relatos: Record<'resultados' | 'desafios', { escola: string; mes: string; campo: string; texto: string }[]> = { resultados: [], desafios: [] }
+  const relatos: Record<Tema, { escola: string; mes: string; campo: string; texto: string }[]> = { resultados: [], desafios: [], interesse: [] }
   const porEscolaTema: Record<string, number> = {}, vistos: Record<string, boolean> = {}
   const nomeVinculo = Object.fromEntries(grade.map(g => [g.vinculo, g.escola]))
   for (const r of [...validas].sort((a, b) => String(b.mes).localeCompare(String(a.mes)))) {
     for (const [campo, rotulo, tema] of CAMPOS_RELATO) {
-      const texto = trechoRelato(r[campo])
+      const texto = trechoRelato(r[campo], tema === 'interesse')
       if (!texto || vistos[texto] || relatos[tema].length >= LIMITE_RELATOS.porTema) continue
       const k = r.vinculo_id + '|' + tema
       if ((porEscolaTema[k] || 0) >= LIMITE_RELATOS.porEscola) continue
@@ -146,7 +162,9 @@ export function montarRelatorioPatrocinador(T: Tabelas, patrocinador: string, de
     if (!ehSim(g.acompanhar)) atencao.push(`${g.escola} (${g.projeto}): ${g.acompanhar === 'não' ? 'fora do acompanhamento mensal' : `acompanhamento "${g.acompanhar || 'vazio'}"`} no cadastro — confirmar se deve ser cobrada`)
   }
   if (emRevisao.length) atencao.push(`${emRevisao.length} resposta(s) do período ainda em revisão: os números delas não entram nas somas`)
-  if (res.respostas_validas && res.com_visitas < res.respostas_validas) atencao.push(`Visitas: ${res.com_visitas} de ${res.respostas_validas} respostas informaram número; o total está subestimado`)
+  // cada número só é cobrado de quem respondeu o formulário que perguntava por ele
+  if (res.respostas_antigas && res.com_visitas < res.respostas_antigas) atencao.push(`Visitas: ${res.com_visitas} de ${res.respostas_antigas} respostas informaram número; o total está subestimado`)
+  if (res.respostas_novas && res.com_estudantes < res.respostas_novas) atencao.push(`Estudantes atendidos: ${res.com_estudantes} de ${res.respostas_novas} respostas informaram número; o total está subestimado`)
   const semCiclo = meses.filter(m => !ciclos[m])
   if (semCiclo.length) atencao.push(`Meses sem ciclo aberto no sistema (${semCiclo.map(rotuloMes).join(', ')}): sem taxa de resposta para eles`)
 
@@ -160,7 +178,7 @@ export function montarRelatorioPatrocinador(T: Tabelas, patrocinador: string, de
     meses: meses.map(m => ({ id: m, rotulo: rotuloMes(m), ciclo: !!ciclos[m] })),
     projetos: [...new Set(grade.map(g => g.projeto))],
     escolas: grade.length, acompanhadas: grade.filter(g => ehSim(g.acompanhar)).length,
-    resumo: res, faixas, grade, relatos, atencao,
+    resumo: res, faixas, faixas_emprestimos, faixas_atividades, grade, relatos, atencao,
   }
 }
 
@@ -169,13 +187,19 @@ export type Relatorio = ReturnType<typeof montarRelatorioPatrocinador>
 /** Texto corrido para colar num e-mail interno ou numa ata. */
 export function textoRelatorio(r: Relatorio) {
   const s = r.resumo, pct = (v: number | null) => (v === null ? 'sem ciclo no período' : Math.round(v * 100) + '%')
-  const uso: [string, number, number][] = [['visitas', s.visitas, s.com_visitas], ['empréstimos', s.emprestimos, s.com_emprestimos], ['eventos/atividades', s.eventos, s.com_eventos]]
+  const uso: [string, number, number][] = [
+    ...(s.respostas_novas ? [['estudantes atendidos', s.estudantes, s.com_estudantes] as [string, number, number]] : []),
+    ...(s.respostas_antigas || !s.respostas_novas ? [['visitas', s.visitas, s.com_visitas] as [string, number, number]] : []),
+    ['empréstimos', s.emprestimos, s.com_emprestimos], ['eventos/atividades', s.eventos, s.com_eventos]]
+  const faixa = (g: Record<string, number>) => Object.entries(g).map(([k, n]) => `${k}: ${n}`).join(', ')
   const linhas = [
     `Relatório interno — ${r.patrocinador} — ${r.periodo}`,
     `Projetos: ${r.projetos.join(', ')}. Escolas vinculadas: ${r.escolas} (${r.acompanhadas} em acompanhamento).`,
     `Respostas: ${s.respondidas} de ${s.esperadas} esperadas (taxa ${pct(s.taxa)}); ${s.pendentes} pendente(s), ${s.em_revisao} em revisão.`,
     'Uso informado: ' + uso.map(([nome, total, com]) => (com ? `${total} ${nome} (${com} de ${s.respostas_validas} respostas informaram)` : `${nome}: sem informação`)).join('; ') + '.',
   ]
+  if (Object.keys(r.faixas_emprestimos).length) linhas.push(`Empréstimos por faixa (escolas): ${faixa(r.faixas_emprestimos)}.`)
+  if (Object.keys(r.faixas_atividades).length) linhas.push(`Atividades pedagógicas por faixa (escolas): ${faixa(r.faixas_atividades)}.`)
   if (r.atencao.length) linhas.push('', 'Pontos de atenção:')
   for (const a of r.atencao) linhas.push('- ' + a)
   const rel = r.relatos.resultados.slice(0, 3)
@@ -183,6 +207,6 @@ export function textoRelatorio(r: Relatorio) {
     linhas.push('', 'Relatos das escolas (trechos literais):')
     for (const x of rel) linhas.push(`- ${x.escola}, ${x.mes}: "${x.texto}"`)
   }
-  linhas.push('', `Gerado em ${r.gerado_em}. Visitas não equivalem a alunos diferentes.`)
+  linhas.push('', `Gerado em ${r.gerado_em}. Visitas não equivalem a alunos diferentes.${s.respostas_novas ? ' Estudantes atendidos é o número aproximado informado pela escola.' : ''}`)
   return linhas.join('\n')
 }
