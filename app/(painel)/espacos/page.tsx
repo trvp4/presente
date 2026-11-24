@@ -78,7 +78,7 @@ export default async function Mes({ searchParams }: { searchParams: Promise<{ ci
                     <div className="t">{d.escola}</div>
                     <div className="s">
                       {d.cidade && `${d.cidade} · `}
-                      {dispensada ? `dispensada: ${o.motivo_dispensa}` : o.situacao === 'em revisão' ? 'respondeu; resposta em revisão' : o.meses_sem_responder === 'nunca respondeu' ? 'nunca respondeu pelo sistema' : `última resposta: ${rotuloMes(o.ultima_resposta)}`}
+                      {dispensada ? `dispensada: ${o.motivo_dispensa}` : o.situacao === 'em revisão' ? 'respondeu; resposta em revisão' : o.meses_sem_responder === 'nunca respondeu' ? 'nunca respondeu pelo sistema' : <>última resposta: <Link href={`/espacos/respostas?vinculo=${o.vinculo_id}`}>{rotuloMes(o.ultima_resposta)}</Link></>}
                       {contato && ` · contato ${dataCurta(contato.data)} por ${contato.canal}${contato.resultado ? `: ${contato.resultado}` : ''}`}
                     </div>
                   </div>

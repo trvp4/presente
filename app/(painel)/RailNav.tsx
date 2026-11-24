@@ -50,6 +50,7 @@ export default function RailNav({ email, name }: { email: string; name: string |
         <>
           {voltar}
           {item('/espacos', 'mes', 'Mês', path === '/espacos')}
+          {item('/espacos/respostas', 'respostas', 'Respostas', path.startsWith('/espacos/respostas'))}
           {item('/espacos/revisao', 'revisao', 'Revisão', path.startsWith('/espacos/revisao'))}
           {item('/espacos/escolas', 'escolas', 'Escolas', path.startsWith('/espacos/escolas'))}
           {item('/espacos/relatorios', 'relatorios', 'Relatórios por patrocinador', path.startsWith('/espacos/relatorios'))}

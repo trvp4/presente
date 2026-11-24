@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { getStaff } from '@/lib/supabase/server'
 import { carregarEspacos } from '@/lib/espacos/banco'
 import { ehMesIso, rotuloMes } from '@/lib/espacos/normalizacao'
@@ -49,7 +50,7 @@ export default async function Escolas() {
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {v.acompanhar !== true ? 'a confirmar (sem cobrança)' : `${ehMesIso(v.inicio) ? rotuloMes(v.inicio) : 'sempre'}${ehMesIso(v.fim) ? ` a ${rotuloMes(v.fim)}` : ' em diante'}`}
                   </td>
-                  <td className="n">{respostasPor.get(v.vinculo_id) ?? 0}</td>
+                  <td className="n">{respostasPor.get(v.vinculo_id) ? <Link href={`/espacos/respostas?vinculo=${v.vinculo_id}`} title="Ver as respostas desta escola">{respostasPor.get(v.vinculo_id)}</Link> : 0}</td>
                   <td style={{ textAlign: 'right' }}>{v.acompanhar === true ? <EncerrarAcompanhamento vinculo={v.vinculo_id} encerrado={encerrado} /> : <AtivarAcompanhamento vinculo={v.vinculo_id} />}</td>
                 </tr>
               ))}
